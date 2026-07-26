@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">澄语</string>
+    <string name="app_tagline">Native multi-model chat</string>
+    <string name="group_selected_count">Select members · %1$d selected (at least 2)</string>
+    <string name="notification_channel_name">Chat messages</string>
+    <string name="notification_channel_description">Notify when a model reply is ready</string>
+</resources>

@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">澄语</string>
+    <string name="app_tagline">マルチモデル対応ネイティブチャット</string>
+    <string name="group_selected_count">メンバーを選択 · %1$d人選択済み（2人以上）</string>
+    <string name="notification_channel_name">チャットメッセージ</string>
+    <string name="notification_channel_description">モデルの返信が完了したら通知します</string>
+</resources>

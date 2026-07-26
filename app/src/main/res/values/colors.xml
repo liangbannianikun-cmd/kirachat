@@ -1,0 +1,9 @@
+<resources>
+    <color name="miuix_background">#F4F4F6</color>
+    <color name="miuix_surface">#FFFFFFFF</color>
+    <color name="miuix_text_primary">#E6000000</color>
+    <color name="miuix_text_secondary">#85000000</color>
+    <color name="wechat_green">#07C160</color>
+    <color name="wechat_bubble">#95EC69</color>
+    <color name="launcher_background">#F3F5F7</color>
+</resources>

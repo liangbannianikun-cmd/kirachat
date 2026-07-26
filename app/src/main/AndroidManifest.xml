@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="app.miuix.tavern">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/app_icon"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/app_icon"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MiuTavern"
+        android:usesCleartextTraffic="true">
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:screenOrientation="unspecified" />
+        <activity
+            android:name=".ui.CharacterProfileActivity"
+            android:screenOrientation="unspecified" />
+        <activity
+            android:name=".ui.ChatInfoActivity"
+            android:screenOrientation="unspecified" />
+        <activity
+            android:name=".ui.ChatSearchActivity"
+            android:screenOrientation="unspecified"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.VoiceCallActivity"
+            android:screenOrientation="unspecified" />
+        <activity
+            android:name=".ui.CreateGroupActivity"
+            android:screenOrientation="unspecified" />
+        <activity
+            android:name=".ui.GroupChatActivity"
+            android:screenOrientation="unspecified"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.ChatActivity"
+            android:screenOrientation="unspecified"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:screenOrientation="unspecified">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

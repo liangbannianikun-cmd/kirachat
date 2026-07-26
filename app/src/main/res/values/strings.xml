@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">澄语</string>
+    <string name="app_tagline">多模型原生聊天客户端</string>
+    <string name="group_selected_count">选择成员 · 已选 %1$d 位（至少 2 位）</string>
+    <string name="notification_channel_name">聊天消息</string>
+    <string name="notification_channel_description">模型回复完成时通知</string>
+</resources>
