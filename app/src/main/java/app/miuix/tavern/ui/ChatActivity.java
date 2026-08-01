@@ -60,6 +60,7 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
     private static final int REQUEST_ALBUM = 801;
     private static final int REQUEST_CAMERA = 802;
     private static final int REQUEST_LOCATION = 803;
+    private static final int REQUEST_VOICE_CALL = 804;
     private static final String STATE_CAMERA_PATH = "camera_path";
 
     private LocalStore store;
@@ -467,7 +468,7 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
         List<WechatMessageMenu.Item> items = new ArrayList<>();
         items.add(new WechatMessageMenu.Item(
                 "复制", () -> copy(message.content)));
-        if (!message.hasImage() && !message.hasLocation()) {
+        if (!message.hasImage() && !message.hasLocation() && !message.hasVoiceCall()) {
             items.add(new WechatMessageMenu.Item(
                     "编辑", () -> editMessage(message, position)));
         }
@@ -560,7 +561,7 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
     private void openVoiceCall() {
         Intent intent = new Intent(this, VoiceCallActivity.class);
         intent.putExtra(VoiceCallActivity.EXTRA_CHARACTER_ID, character.id);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_VOICE_CALL);
     }
 
     private void toggleMorePanel() {
@@ -709,6 +710,19 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
         }
     }
 
+    private void addVoiceCallRecord(long durationSeconds) {
+        if (durationSeconds <= 0) return;
+        String duration = ChatMessage.formatCallDuration(durationSeconds);
+        ChatMessage message = new ChatMessage(
+                ChatMessage.USER, "通话时长 " + duration);
+        message.attachmentType = ChatMessage.ATTACHMENT_VOICE_CALL;
+        message.callDurationSeconds = durationSeconds;
+        messages.add(message);
+        adapter.notifyItemInserted(messages.size() - 1);
+        store.saveMessages(character.id, messages);
+        scrollToBottom(true);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
                                     @Nullable Intent data) {
@@ -716,6 +730,10 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
         if (requestCode == REQUEST_ALBUM && resultCode == Activity.RESULT_OK
                 && data != null && data.getData() != null) {
             importImage(data.getData());
+        } else if (requestCode == REQUEST_VOICE_CALL
+                && resultCode == Activity.RESULT_OK && data != null) {
+            addVoiceCallRecord(data.getLongExtra(
+                    VoiceCallActivity.EXTRA_CALL_DURATION_SECONDS, 0));
         } else if (requestCode == REQUEST_CAMERA) {
             File captured = pendingCameraFile;
             pendingCameraFile = null;

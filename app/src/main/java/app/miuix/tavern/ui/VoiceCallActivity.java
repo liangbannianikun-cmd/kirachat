@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
@@ -28,8 +29,11 @@ import app.miuix.tavern.network.RealtimeVoiceClient;
 public final class VoiceCallActivity extends AppCompatActivity
         implements RealtimeVoiceClient.Listener {
     public static final String EXTRA_CHARACTER_ID = "character_id";
+    public static final String EXTRA_CALL_DURATION_SECONDS = "call_duration_seconds";
 
     private static final int REQUEST_MICROPHONE = 4310;
+    private static final String STATE_CALL_STARTED_AT = "call_started_at";
+    private static final String STATE_CALL_ENDED_AT = "call_ended_at";
     private static final int BACKGROUND = Color.rgb(35, 37, 42);
     private static final int SECONDARY = Color.rgb(177, 180, 188);
     private static final int CONTROL = Color.rgb(69, 72, 79);
@@ -49,6 +53,9 @@ public final class VoiceCallActivity extends AppCompatActivity
     private boolean waitingPermission;
     private boolean openedSettings;
     private boolean failed;
+    private long callStartedAtElapsed;
+    private long callEndedAtElapsed;
+    private boolean resultPrepared;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,6 +66,10 @@ public final class VoiceCallActivity extends AppCompatActivity
 
         store = new LocalStore(this);
         secureStore = new SecureStore(this);
+        if (savedInstanceState != null) {
+            callStartedAtElapsed = savedInstanceState.getLong(STATE_CALL_STARTED_AT, 0);
+            callEndedAtElapsed = savedInstanceState.getLong(STATE_CALL_ENDED_AT, 0);
+        }
         String id = getIntent().getStringExtra(EXTRA_CHARACTER_ID);
         character = store.getCharacter(id == null ? "" : id);
         if (character == null) {
@@ -280,6 +291,10 @@ public final class VoiceCallActivity extends AppCompatActivity
             startActivity(new Intent(this, SettingsActivity.class));
             return;
         }
+        if (callEndedAtElapsed > 0) {
+            callStartedAtElapsed = 0;
+            callEndedAtElapsed = 0;
+        }
         failed = false;
         actionButton.setVisibility(View.GONE);
         transcript.setText("正在重新连接…");
@@ -322,6 +337,12 @@ public final class VoiceCallActivity extends AppCompatActivity
 
     @Override
     public void onState(String state) {
+        if (callStartedAtElapsed <= 0
+                && state != null
+                && state.startsWith("通话中")) {
+            callStartedAtElapsed = SystemClock.elapsedRealtime();
+            callEndedAtElapsed = 0;
+        }
         status.setText(L10n.tr(this, state));
     }
 
@@ -334,6 +355,7 @@ public final class VoiceCallActivity extends AppCompatActivity
 
     @Override
     public void onError(String error) {
+        markCallEnded();
         failed = true;
         clientStarted = false;
         RealtimeVoiceClient failedClient = client;
@@ -347,10 +369,47 @@ public final class VoiceCallActivity extends AppCompatActivity
 
     @Override
     public void onEnded() {
+        markCallEnded();
         clientStarted = false;
         RealtimeVoiceClient endedClient = client;
         client = null;
         if (endedClient != null) endedClient.stop();
+    }
+
+    private void markCallEnded() {
+        if (callStartedAtElapsed > 0 && callEndedAtElapsed <= 0) {
+            callEndedAtElapsed = SystemClock.elapsedRealtime();
+        }
+    }
+
+    private void prepareCallResult() {
+        if (resultPrepared) return;
+        resultPrepared = true;
+        if (callStartedAtElapsed <= 0) {
+            setResult(RESULT_CANCELED);
+            return;
+        }
+        long endedAt = callEndedAtElapsed > callStartedAtElapsed
+                ? callEndedAtElapsed
+                : SystemClock.elapsedRealtime();
+        long duration = Math.max(
+                1L, (endedAt - callStartedAtElapsed + 500L) / 1000L);
+        Intent result = new Intent();
+        result.putExtra(EXTRA_CALL_DURATION_SECONDS, duration);
+        setResult(RESULT_OK, result);
+    }
+
+    @Override
+    public void finish() {
+        prepareCallResult();
+        super.finish();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putLong(STATE_CALL_STARTED_AT, callStartedAtElapsed);
+        outState.putLong(STATE_CALL_ENDED_AT, callEndedAtElapsed);
+        super.onSaveInstanceState(outState);
     }
 
     @Override

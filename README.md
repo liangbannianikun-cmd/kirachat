@@ -1,6 +1,6 @@
 # 澄语
 
-澄语是一个面向普通 Android 手机和平板的原生角色聊天客户端。它没有把网页装进 WebView，而是重新实现了适合触屏的角色、会话、世界书、群聊和连接流程。
+澄语是一个面向手机和平板的原生角色聊天客户端。Android 端使用原生 View，iOS 端使用 SwiftUI；两端都没有把网页装进 WebView，而是重新实现适合触屏的角色、会话、世界书、群聊和连接流程。
 
 ## 已实现
 
@@ -207,6 +207,26 @@ Merkle 领取和 Base Sepolia 部署步骤见
 [`points-server/CC_TOKEN.md`](points-server/CC_TOKEN.md)。
 
 ## 构建
+
+### iOS
+
+iOS 工程位于 `ios/`，使用 SwiftUI、Keychain、PhotosUI、Core Location、Speech 与 AVFoundation，最低支持 iOS 16。版本保持 `0.9.0 (9)`，Bundle ID 为 `app.miuix.tavern`。
+
+在 macOS 安装 Xcode 与 XcodeGen 后执行：
+
+```bash
+cp app/src/main/res/mipmap-nodpi/app_icon.png ios/KiraChat/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+cp app/src/main/res/raw/dounai_gpt.png ios/KiraChat/Resources/Assets.xcassets/Dounai.imageset/dounai_gpt.png
+cd ios
+xcodegen generate
+xcodebuild -project KiraChat.xcodeproj -scheme KiraChat -sdk iphoneos -destination 'generic/platform=iOS' build
+```
+
+仓库的 `.github/workflows/ios-ipa.yml` 会在 GitHub macOS Runner 上自动生成工程、复用 Android 端应用图标和豆乃GPT头像、构建设备 App，并打包 `KiraChat-0.9.0-unsigned.ipa`。这个 IPA 没有内置开发者签名：正式安装或分发前仍需使用自己的 Apple Developer Team、证书和描述文件重新签名。
+
+iOS 首版已移植四栏 Dock、角色资料、Tavern JSON 角色卡、世界书、本地群聊、微信式消息气泡、图片/拍照/位置、多协议直连 API、自动模型列表、联网搜索声明、Keychain 密钥、三语界面，以及使用系统听写 + 当前聊天模型 + 系统 TTS 的按住说话语音对话。Android 端各厂商原生 Realtime WebSocket、本地 Qwen GGUF、GPT/Copilot 账户登录和链上积分尚未移入 iOS；界面不会把这些尚未移植的能力伪装为可用。
+
+### Android
 
 要求：
 

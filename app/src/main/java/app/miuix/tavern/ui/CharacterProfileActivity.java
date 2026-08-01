@@ -35,6 +35,7 @@ import java.util.List;
 public final class CharacterProfileActivity extends AppCompatActivity {
     public static final String EXTRA_CHARACTER_ID = "character_id";
     private static final int REQUEST_AVATAR = 4204;
+    private static final int REQUEST_VOICE_CALL = 4205;
     private static final long MAX_AVATAR_BYTES = 15L * 1024L * 1024L;
 
     private static final int ACTION_BLUE = Color.rgb(87, 107, 149);
@@ -341,7 +342,7 @@ public final class CharacterProfileActivity extends AppCompatActivity {
     private void openVoiceCall() {
         Intent intent = new Intent(this, VoiceCallActivity.class);
         intent.putExtra(VoiceCallActivity.EXTRA_CHARACTER_ID, character.id);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_VOICE_CALL);
     }
 
     private void chooseAvatar() {
@@ -354,6 +355,13 @@ public final class CharacterProfileActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_VOICE_CALL) {
+            if (resultCode == RESULT_OK && data != null) {
+                addVoiceCallRecord(data.getLongExtra(
+                        VoiceCallActivity.EXTRA_CALL_DURATION_SECONDS, 0));
+            }
+            return;
+        }
         if (requestCode != REQUEST_AVATAR
                 || resultCode != RESULT_OK
                 || data == null
@@ -363,6 +371,19 @@ public final class CharacterProfileActivity extends AppCompatActivity {
         Uri selected = data.getData();
         LocalizedToast.makeText(this, "正在更新头像…", Toast.LENGTH_SHORT).show();
         new Thread(() -> copyAvatar(selected), "avatar-import").start();
+    }
+
+    private void addVoiceCallRecord(long durationSeconds) {
+        if (durationSeconds <= 0) return;
+        List<ChatMessage> messages = store.getMessages(character.id);
+        String duration = ChatMessage.formatCallDuration(durationSeconds);
+        ChatMessage message = new ChatMessage(
+                ChatMessage.USER, "通话时长 " + duration);
+        message.attachmentType = ChatMessage.ATTACHMENT_VOICE_CALL;
+        message.callDurationSeconds = durationSeconds;
+        messages.add(message);
+        store.saveMessages(character.id, messages);
+        store.touchCharacter(character.id);
     }
 
     private void copyAvatar(Uri selected) {

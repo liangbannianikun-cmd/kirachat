@@ -1,0 +1,32 @@
+name: KiraChat
+options:
+  bundleIdPrefix: app.miuix
+  developmentLanguage: zh-Hans
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.9.0"
+    CURRENT_PROJECT_VERSION: "9"
+    DEVELOPMENT_TEAM: ""
+targets:
+  KiraChat:
+    type: application
+    platform: iOS
+    sources:
+      - path: KiraChat
+        excludes:
+          - Resources/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.miuix.tavern
+        PRODUCT_NAME: KiraChat
+        INFOPLIST_FILE: KiraChat/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: false
+        CODE_SIGN_STYLE: Automatic
+    scheme:
+      testTargets: []

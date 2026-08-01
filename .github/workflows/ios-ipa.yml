@@ -1,0 +1,67 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/ios-port
+    paths:
+      - "ios/**"
+      - "app/src/main/res/mipmap-nodpi/app_icon.png"
+      - "app/src/main/res/raw/dounai_gpt.png"
+      - ".github/workflows/ios-ipa.yml"
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare shared artwork
+        shell: bash
+        run: |
+          sips -z 1024 1024 app/src/main/res/mipmap-nodpi/app_icon.png --out ios/KiraChat/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+          cp app/src/main/res/raw/dounai_gpt.png ios/KiraChat/Resources/Assets.xcassets/Dounai.imageset/dounai_gpt.png
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build unsigned device app
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project KiraChat.xcodeproj \
+            -scheme KiraChat \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            clean build | tee build.log
+
+      - name: Package IPA
+        working-directory: ios
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/KiraChat.app Payload/KiraChat.app
+          /usr/bin/zip -qry KiraChat-0.9.0-unsigned.ipa Payload
+          shasum -a 256 KiraChat-0.9.0-unsigned.ipa > KiraChat-0.9.0-unsigned.ipa.sha256
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: KiraChat-iOS-0.9.0
+          path: |
+            ios/KiraChat-0.9.0-unsigned.ipa
+            ios/KiraChat-0.9.0-unsigned.ipa.sha256
+            ios/build.log
+          if-no-files-found: error
+          retention-days: 30

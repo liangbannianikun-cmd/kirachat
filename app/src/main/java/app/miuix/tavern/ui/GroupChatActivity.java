@@ -67,6 +67,7 @@ public final class GroupChatActivity extends AppCompatActivity
     private static final int REQUEST_ALBUM = 811;
     private static final int REQUEST_CAMERA = 812;
     private static final int REQUEST_LOCATION = 813;
+    private static final int REQUEST_VOICE_CALL = 814;
     private static final String STATE_CAMERA_PATH = "camera_path";
 
     private LocalStore store;
@@ -757,7 +758,7 @@ public final class GroupChatActivity extends AppCompatActivity
                     Intent intent = new Intent(this, VoiceCallActivity.class);
                     intent.putExtra(
                             VoiceCallActivity.EXTRA_CHARACTER_ID, members.get(which).id);
-                    startActivity(intent);
+                    startActivityForResult(intent, REQUEST_VOICE_CALL);
                 })
                 .setNegativeButton("取消", null)
                 .show();
@@ -804,6 +805,19 @@ public final class GroupChatActivity extends AppCompatActivity
         startConcurrentRound(members, false);
     }
 
+    private void addVoiceCallRecord(long durationSeconds) {
+        if (durationSeconds <= 0) return;
+        String duration = ChatMessage.formatCallDuration(durationSeconds);
+        ChatMessage message = new ChatMessage(
+                ChatMessage.USER, "通话时长 " + duration);
+        message.attachmentType = ChatMessage.ATTACHMENT_VOICE_CALL;
+        message.callDurationSeconds = durationSeconds;
+        messages.add(message);
+        adapter.notifyItemInserted(messages.size() - 1);
+        store.saveMessages(group.conversationId(), messages);
+        scrollToBottom(true);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
                                     @Nullable Intent data) {
@@ -811,6 +825,10 @@ public final class GroupChatActivity extends AppCompatActivity
         if (requestCode == REQUEST_ALBUM && resultCode == Activity.RESULT_OK
                 && data != null && data.getData() != null) {
             importImage(data.getData());
+        } else if (requestCode == REQUEST_VOICE_CALL
+                && resultCode == Activity.RESULT_OK && data != null) {
+            addVoiceCallRecord(data.getLongExtra(
+                    VoiceCallActivity.EXTRA_CALL_DURATION_SECONDS, 0));
         } else if (requestCode == REQUEST_CAMERA) {
             File captured = pendingCameraFile;
             pendingCameraFile = null;

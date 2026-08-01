@@ -3,6 +3,7 @@ package app.miuix.tavern.model;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Locale;
 import java.util.UUID;
 
 public final class ChatMessage {
@@ -12,6 +13,7 @@ public final class ChatMessage {
     public static final String ATTACHMENT_NONE = "";
     public static final String ATTACHMENT_IMAGE = "image";
     public static final String ATTACHMENT_LOCATION = "location";
+    public static final String ATTACHMENT_VOICE_CALL = "voice_call";
 
     public String id;
     public String role;
@@ -22,6 +24,7 @@ public final class ChatMessage {
     public String attachmentMime;
     public double latitude;
     public double longitude;
+    public long callDurationSeconds;
     public long timestamp;
     public boolean failed;
 
@@ -47,6 +50,7 @@ public final class ChatMessage {
                 .put("attachmentMime", attachmentMime)
                 .put("latitude", latitude)
                 .put("longitude", longitude)
+                .put("callDurationSeconds", callDurationSeconds)
                 .put("timestamp", timestamp)
                 .put("failed", failed);
     }
@@ -62,6 +66,7 @@ public final class ChatMessage {
         message.attachmentMime = object.optString("attachmentMime", "");
         message.latitude = object.optDouble("latitude", 0);
         message.longitude = object.optDouble("longitude", 0);
+        message.callDurationSeconds = object.optLong("callDurationSeconds", 0);
         message.timestamp = object.optLong("timestamp", System.currentTimeMillis());
         message.failed = object.optBoolean("failed", false);
         return message;
@@ -75,5 +80,21 @@ public final class ChatMessage {
 
     public boolean hasLocation() {
         return ATTACHMENT_LOCATION.equals(attachmentType);
+    }
+
+    public boolean hasVoiceCall() {
+        return ATTACHMENT_VOICE_CALL.equals(attachmentType)
+                && callDurationSeconds > 0;
+    }
+
+    public static String formatCallDuration(long totalSeconds) {
+        long seconds = Math.max(0, totalSeconds);
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        long remainder = seconds % 60;
+        if (hours > 0) {
+            return String.format(Locale.US, "%d:%02d:%02d", hours, minutes, remainder);
+        }
+        return String.format(Locale.US, "%02d:%02d", minutes, remainder);
     }
 }

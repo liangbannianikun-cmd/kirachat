@@ -22,6 +22,9 @@ import java.util.Locale;
 public final class MessageBubbleView extends LinearLayout {
     private final ImageView image;
     private final TextView location;
+    private final LinearLayout voiceCall;
+    private final LineIconView voiceCallIcon;
+    private final TextView voiceCallText;
     private final TextView text;
 
     public MessageBubbleView(Context context, boolean user, int maxWidth) {
@@ -55,6 +58,35 @@ public final class MessageBubbleView extends LinearLayout {
                 Math.min(maxWidth, MiuixUi.dp(context, 220)),
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        voiceCall = MiuixUi.horizontal(context);
+        voiceCall.setGravity(Gravity.CENTER_VERTICAL);
+        voiceCall.setMinimumWidth(MiuixUi.dp(context, 132));
+        voiceCall.setPadding(MiuixUi.dp(context, 5), MiuixUi.dp(context, 4),
+                MiuixUi.dp(context, 7), MiuixUi.dp(context, 4));
+        voiceCallIcon = new LineIconView(context);
+        voiceCallIcon.setType(LineIconView.PHONE);
+        voiceCallIcon.setTintColor(MiuixUi.color(context, MiuixUi.TEXT_PRIMARY));
+        voiceCallText = MiuixUi.text(
+                context, "", 16, MiuixUi.TEXT_PRIMARY, false);
+        L10n.setRaw(voiceCallText);
+        LinearLayout.LayoutParams callTextParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams callIconParams = new LinearLayout.LayoutParams(
+                MiuixUi.dp(context, 24), MiuixUi.dp(context, 24));
+        if (user) {
+            callTextParams.rightMargin = MiuixUi.dp(context, 7);
+            voiceCall.addView(voiceCallText, callTextParams);
+            voiceCall.addView(voiceCallIcon, callIconParams);
+        } else {
+            callTextParams.leftMargin = MiuixUi.dp(context, 7);
+            voiceCall.addView(voiceCallIcon, callIconParams);
+            voiceCall.addView(voiceCallText, callTextParams);
+        }
+        addView(voiceCall, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
         text = MiuixUi.text(context, "", 16, MiuixUi.TEXT_PRIMARY, false);
         L10n.setRaw(text);
         text.setGravity(Gravity.CENTER_VERTICAL);
@@ -73,6 +105,7 @@ public final class MessageBubbleView extends LinearLayout {
         image.setVisibility(View.GONE);
         image.setImageDrawable(null);
         location.setVisibility(View.GONE);
+        voiceCall.setVisibility(View.GONE);
         text.setVisibility(View.VISIBLE);
 
         if (message.hasImage()) {
@@ -88,6 +121,10 @@ public final class MessageBubbleView extends LinearLayout {
                     message.latitude,
                     message.longitude));
             location.setVisibility(View.VISIBLE);
+        } else if (message.hasVoiceCall()) {
+            voiceCallText.setText(L10n.tr(getContext(), "通话时长")
+                    + " " + ChatMessage.formatCallDuration(message.callDurationSeconds));
+            voiceCall.setVisibility(View.VISIBLE);
         }
 
         String content = message.content == null ? "" : message.content.trim();
@@ -105,7 +142,8 @@ public final class MessageBubbleView extends LinearLayout {
         text.setTextColor(MiuixUi.color(
                 getContext(),
                 message.failed ? MiuixUi.DANGER : MiuixUi.TEXT_PRIMARY));
-        text.setVisibility((content.isEmpty() || defaultAttachmentText)
+        text.setVisibility((content.isEmpty() || defaultAttachmentText
+                || message.hasVoiceCall())
                 ? View.GONE : View.VISIBLE);
     }
 
@@ -113,10 +151,16 @@ public final class MessageBubbleView extends LinearLayout {
         setOnLongClickListener(listener);
         image.setOnLongClickListener(listener);
         location.setOnLongClickListener(listener);
+        voiceCall.setOnLongClickListener(listener);
+        voiceCallIcon.setOnLongClickListener(listener);
+        voiceCallText.setOnLongClickListener(listener);
         text.setOnLongClickListener(listener);
         setLongClickable(true);
         image.setLongClickable(true);
         location.setLongClickable(true);
+        voiceCall.setLongClickable(true);
+        voiceCallIcon.setLongClickable(true);
+        voiceCallText.setLongClickable(true);
         text.setLongClickable(true);
     }
 }

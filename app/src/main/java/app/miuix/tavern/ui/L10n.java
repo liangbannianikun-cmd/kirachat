@@ -171,6 +171,7 @@ public final class L10n {
         add("拍摄", "Camera", "撮影");
         add("位置", "Location", "位置");
         add("语音通话", "Voice call", "音声通話");
+        add("通话时长", "Call duration", "通話時間");
         add("返回并挂断", "Back and hang up", "戻って通話を終了");
         add("挂断", "Hang up", "通話終了");
         add("静音", "Mute", "ミュート");
