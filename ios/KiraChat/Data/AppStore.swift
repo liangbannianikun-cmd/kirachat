@@ -363,7 +363,6 @@ final class AppStore: ObservableObject {
                     }
                 }
                 for await (card, result) in taskGroup {
-                    guard let self else { return }
                     switch result {
                     case .success(let text):
                         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
