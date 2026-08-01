@@ -128,15 +128,94 @@ enum APIFormat: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum GenerationMode: String, Codable, CaseIterable, Identifiable {
+    case directAPI
+    case account
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .directAPI: return NSLocalizedString("直连 API", comment: "")
+        case .account: return NSLocalizedString("账户", comment: "")
+        }
+    }
+}
+
+enum AccountProvider: String, Codable, CaseIterable, Identifiable {
+    case gpt
+    case copilot
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .gpt: return "GPT"
+        case .copilot: return "GitHub Copilot"
+        }
+    }
+}
+
 struct AppSettings: Codable, Equatable {
+    var generationMode: GenerationMode = .directAPI
     var apiFormat: APIFormat = .chatCompletions
     var baseURL = "https://api.openai.com/v1"
     var model = ""
+    var accountProvider: AccountProvider = .gpt
+    var gptModel = "gpt-5.4"
+    var copilotModel = "gpt-5.4"
+    var copilotEndpoint = ""
+    var githubOAuthClientID = ""
     var persona = "你"
     var personaAvatarData: Data?
     var webSearch = true
     var showReasoning = false
     var groupAutonomousMessages = true
+
+    var activeModel: String {
+        guard generationMode == .account else { return model }
+        return accountProvider == .gpt ? gptModel : copilotModel
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case generationMode, apiFormat, baseURL, model
+        case accountProvider, gptModel, copilotModel
+        case copilotEndpoint, githubOAuthClientID
+        case persona, personaAvatarData, webSearch, showReasoning
+        case groupAutonomousMessages
+    }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        generationMode = try values.decodeIfPresent(
+            GenerationMode.self, forKey: .generationMode) ?? .directAPI
+        apiFormat = try values.decodeIfPresent(
+            APIFormat.self, forKey: .apiFormat) ?? .chatCompletions
+        baseURL = try values.decodeIfPresent(
+            String.self, forKey: .baseURL) ?? "https://api.openai.com/v1"
+        model = try values.decodeIfPresent(String.self, forKey: .model) ?? ""
+        accountProvider = try values.decodeIfPresent(
+            AccountProvider.self, forKey: .accountProvider) ?? .gpt
+        gptModel = try values.decodeIfPresent(
+            String.self, forKey: .gptModel) ?? "gpt-5.4"
+        copilotModel = try values.decodeIfPresent(
+            String.self, forKey: .copilotModel) ?? "gpt-5.4"
+        copilotEndpoint = try values.decodeIfPresent(
+            String.self, forKey: .copilotEndpoint) ?? ""
+        githubOAuthClientID = try values.decodeIfPresent(
+            String.self, forKey: .githubOAuthClientID) ?? ""
+        persona = try values.decodeIfPresent(String.self, forKey: .persona) ?? "你"
+        personaAvatarData = try values.decodeIfPresent(
+            Data.self, forKey: .personaAvatarData)
+        webSearch = try values.decodeIfPresent(
+            Bool.self, forKey: .webSearch) ?? true
+        showReasoning = try values.decodeIfPresent(
+            Bool.self, forKey: .showReasoning) ?? false
+        groupAutonomousMessages = try values.decodeIfPresent(
+            Bool.self, forKey: .groupAutonomousMessages) ?? true
+    }
 }
 
 struct PersistedState: Codable {
@@ -157,4 +236,3 @@ enum ConversationTarget: Hashable {
         }
     }
 }
-

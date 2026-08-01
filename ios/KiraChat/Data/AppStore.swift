@@ -14,6 +14,11 @@ final class AppStore: ObservableObject {
     @Published private(set) var modelRefreshError = ""
 
     private static let apiKeyAccount = "direct-api-key"
+    private static let gptAccessAccount = "gpt-access-token"
+    private static let gptRefreshAccount = "gpt-refresh-token"
+    private static let gptExpiryAccount = "gpt-expires-at"
+    private static let copilotAccessAccount = "copilot-access-token"
+    private static let copilotLoginAccount = "copilot-login"
     private var isLoading = true
 
     init() {
@@ -25,6 +30,53 @@ final class AppStore: ObservableObject {
     var apiKey: String {
         get { KeychainStore.read(Self.apiKeyAccount) }
         set { KeychainStore.write(newValue, account: Self.apiKeyAccount) }
+    }
+
+    var hasGPTAccount: Bool { !KeychainStore.read(Self.gptAccessAccount).isEmpty }
+    var hasCopilotAccount: Bool { !KeychainStore.read(Self.copilotAccessAccount).isEmpty }
+
+    var accountSummary: String {
+        switch settings.accountProvider {
+        case .gpt:
+            return OpenAIAccountAuth.accountSummary(
+                from: KeychainStore.read(Self.gptAccessAccount))
+        case .copilot:
+            guard hasCopilotAccount else { return NSLocalizedString("未登录", comment: "") }
+            let login = KeychainStore.read(Self.copilotLoginAccount)
+            return login.isEmpty
+                ? NSLocalizedString("已登录 · GitHub Copilot", comment: "")
+                : "\(NSLocalizedString("已登录", comment: "")) · @\(login)"
+        }
+    }
+
+    func saveGPTAccount(_ tokens: GPTTokenSet) {
+        KeychainStore.write(tokens.accessToken, account: Self.gptAccessAccount)
+        KeychainStore.write(tokens.refreshToken, account: Self.gptRefreshAccount)
+        KeychainStore.write(String(tokens.expiresAt), account: Self.gptExpiryAccount)
+        objectWillChange.send()
+    }
+
+    func saveCopilotAccount(_ result: GitHubLoginResult) {
+        KeychainStore.write(result.accessToken, account: Self.copilotAccessAccount)
+        KeychainStore.write(result.login, account: Self.copilotLoginAccount)
+        objectWillChange.send()
+    }
+
+    func logoutCurrentAccount() {
+        switch settings.accountProvider {
+        case .gpt:
+            KeychainStore.write("", account: Self.gptAccessAccount)
+            KeychainStore.write("", account: Self.gptRefreshAccount)
+            KeychainStore.write("", account: Self.gptExpiryAccount)
+        case .copilot:
+            KeychainStore.write("", account: Self.copilotAccessAccount)
+            KeychainStore.write("", account: Self.copilotLoginAccount)
+        }
+        if settings.generationMode == .account {
+            updateSettings { $0.generationMode = .directAPI }
+        }
+        availableModels = []
+        objectWillChange.send()
     }
 
     func messages(for target: ConversationTarget) -> [ChatMessage] {
@@ -65,6 +117,11 @@ final class AppStore: ObservableObject {
         var updated = settings
         change(&updated)
         settings = updated
+    }
+
+    func clearAvailableModels() {
+        availableModels = []
+        modelRefreshError = ""
     }
 
     func addMessage(_ message: ChatMessage, to target: ConversationTarget) {
@@ -217,9 +274,26 @@ final class AppStore: ObservableObject {
     func refreshModels() async {
         modelRefreshError = ""
         do {
-            availableModels = try await APIService.fetchModels(
-                settings: settings,
-                apiKey: apiKey)
+            switch settings.generationMode {
+            case .directAPI:
+                availableModels = try await APIService.fetchModels(
+                    settings: settings,
+                    apiKey: apiKey)
+            case .account:
+                switch settings.accountProvider {
+                case .gpt:
+                    let tokens = try await validGPTTokens()
+                    availableModels = try await AccountAPIService.fetchGPTModels(
+                        accessToken: tokens.accessToken)
+                case .copilot:
+                    guard hasCopilotAccount else {
+                        throw KiraError.message(NSLocalizedString("请先登录 GitHub Copilot 账户", comment: ""))
+                    }
+                    availableModels = try await APIService.fetchModels(
+                        settings: copilotSettings(from: settings),
+                        apiKey: KeychainStore.read(Self.copilotAccessAccount))
+                }
+            }
         } catch {
             modelRefreshError = error.localizedDescription
         }
@@ -229,16 +303,16 @@ final class AppStore: ObservableObject {
         guard let card = character(id: characterID) else { return }
         let history = messages(for: target)
         let config = settings
-        let credential = apiKey
         beginGeneration(target.conversationID)
         Task { [weak self] in
             do {
-                let reply = try await APIService.complete(
+                guard let self else { return }
+                let credential = try await self.generationCredential(for: config)
+                let reply = try await Self.completeReply(
                     character: card,
                     history: history,
                     settings: config,
-                    apiKey: credential)
-                guard let self else { return }
+                    credential: credential)
                 self.addMessage(ChatMessage(role: .assistant, content: reply), to: target)
                 self.endGeneration(target.conversationID)
             } catch {
@@ -258,18 +332,29 @@ final class AppStore: ObservableObject {
         guard !cards.isEmpty else { return }
         let history = messages(for: target)
         let config = settings
-        let credential = apiKey
         generationCounts[target.conversationID, default: 0] += cards.count
         Task { [weak self] in
+            guard let self else { return }
+            let credential: GenerationCredential
+            do {
+                credential = try await self.generationCredential(for: config)
+            } catch {
+                for _ in cards { self.endGeneration(target.conversationID) }
+                self.addMessage(ChatMessage(
+                    role: .assistant,
+                    content: error.localizedDescription,
+                    failed: true), to: target)
+                return
+            }
             await withTaskGroup(of: (CharacterCard, Result<String, Error>).self) { taskGroup in
                 for card in cards {
                     taskGroup.addTask {
                         do {
-                            let reply = try await APIService.complete(
+                            let reply = try await Self.completeReply(
                                 character: card,
                                 history: history,
                                 settings: config,
-                                apiKey: credential,
+                                credential: credential,
                                 groupDecision: true)
                             return (card, .success(reply))
                         } catch {
@@ -304,6 +389,86 @@ final class AppStore: ObservableObject {
     private func endGeneration(_ conversationID: String) {
         generationCounts[conversationID] = max(
             0, (generationCounts[conversationID] ?? 1) - 1)
+    }
+
+    private func validGPTTokens() async throws -> GPTTokenSet {
+        let stored = GPTTokenSet(
+            accessToken: KeychainStore.read(Self.gptAccessAccount),
+            refreshToken: KeychainStore.read(Self.gptRefreshAccount),
+            expiresAt: TimeInterval(KeychainStore.read(Self.gptExpiryAccount)) ?? 0)
+        guard !stored.accessToken.isEmpty || !stored.refreshToken.isEmpty else {
+            throw KiraError.message(NSLocalizedString("请先登录 GPT 账户", comment: ""))
+        }
+        let valid = try await OpenAIAccountAuth.validTokens(stored)
+        if valid.accessToken != stored.accessToken
+            || valid.refreshToken != stored.refreshToken
+            || valid.expiresAt != stored.expiresAt {
+            saveGPTAccount(valid)
+        }
+        return valid
+    }
+
+    private func generationCredential(for config: AppSettings) async throws -> GenerationCredential {
+        switch config.generationMode {
+        case .directAPI:
+            return .direct(apiKey)
+        case .account:
+            switch config.accountProvider {
+            case .gpt:
+                return .gpt((try await validGPTTokens()).accessToken)
+            case .copilot:
+                let token = KeychainStore.read(Self.copilotAccessAccount)
+                guard !token.isEmpty else {
+                    throw KiraError.message(NSLocalizedString("请先登录 GitHub Copilot 账户", comment: ""))
+                }
+                return .copilot(token)
+            }
+        }
+    }
+
+    nonisolated private static func completeReply(
+        character: CharacterCard,
+        history: [ChatMessage],
+        settings: AppSettings,
+        credential: GenerationCredential,
+        groupDecision: Bool = false
+    ) async throws -> String {
+        switch credential {
+        case .direct(let key):
+            return try await APIService.complete(
+                character: character,
+                history: history,
+                settings: settings,
+                apiKey: key,
+                groupDecision: groupDecision)
+        case .gpt(let token):
+            return try await AccountAPIService.completeGPT(
+                character: character,
+                history: history,
+                settings: settings,
+                accessToken: token,
+                groupDecision: groupDecision)
+        case .copilot(let token):
+            return try await APIService.complete(
+                character: character,
+                history: history,
+                settings: copilotSettings(from: settings),
+                apiKey: token,
+                groupDecision: groupDecision)
+        }
+    }
+
+    nonisolated private static func copilotSettings(from source: AppSettings) -> AppSettings {
+        var settings = source
+        settings.generationMode = .directAPI
+        settings.apiFormat = .chatCompletions
+        settings.baseURL = source.copilotEndpoint
+        settings.model = source.copilotModel
+        return settings
+    }
+
+    private func copilotSettings(from source: AppSettings) -> AppSettings {
+        Self.copilotSettings(from: source)
     }
 
     private func ensureBuiltInCharacter() {
@@ -358,6 +523,12 @@ final class AppStore: ObservableObject {
         return base.appendingPathComponent("KiraChat", isDirectory: true)
             .appendingPathComponent("state.json")
     }
+}
+
+private enum GenerationCredential {
+    case direct(String)
+    case gpt(String)
+    case copilot(String)
 }
 
 enum KiraError: LocalizedError {

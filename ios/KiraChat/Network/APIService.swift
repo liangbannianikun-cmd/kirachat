@@ -82,7 +82,7 @@ enum APIService {
         return result
     }
 
-    private static func systemPrompt(
+    static func systemPrompt(
         character: CharacterCard,
         settings: AppSettings,
         groupDecision: Bool

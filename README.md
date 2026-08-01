@@ -135,77 +135,6 @@ Claude 原生协议使用 `POST /v1/messages` 和 `GET /v1/models`；Gemini 原�
 
 本地接入使用 4096 token 上下文和单进程内存保护，最新一张图片会经匹配的视觉组件在设备端编码。联网搜索开启后，网络 API 先调用模型或厂商的原生搜索；只有服务端明确拒绝搜索工具且尚未输出正文时，才把应用检索的带来源摘要注入提示词重试。本地模型没有厂商搜索能力，直接使用应用检索；应用兜底只发送当前查询给公共搜索服务，不上传本地聊天历史。群聊的多个本地回复会排队推理，避免同时加载多个模型进程导致系统因内存不足终止应用。首次回答需要载入 GGUF，耗时会明显长于后续网络请求。
 
-## 区块链积分
-
-0.9.0 提供一套可选的链上积分 MVP：
-
-- `points-server/contracts/ChengyuPoints.sol` 是不可转让积分合约。它没有 ERC-20 的转账、授权和交易接口，只允许已授权发行方发放或核销积分。
-- 每笔业务使用唯一 `reference`，重复请求会在合约层拒绝，避免网络重试造成重复发放。
-- Android APK 不保存发行方私钥。应用只保存由积分服务签发的匿名访问令牌；积分服务验证签到规则、代付 Gas，再把结果写入链上。
-- 当前任务为每日签到，每天领取一次，默认 10 积分。合约已经保留 `spend` 核销能力，可继续接入主题、角色槽位或模型额度兑换。
-- 链上只出现匿名地址、余额与流水标识，不包含聊天、角色卡、API Key 或第三方账户凭据。链上记录公开且通常无法删除。
-- 当前匿名积分令牌只加密保存在本机且不进入 Android 备份；卸载应用后暂时无法恢复原积分账户。正式上线前应增加经过验证的用户账号或钱包绑定与恢复流程。
-
-默认开发网络为 Base Sepolia（chain ID `84532`）。测试公共 RPC 是限流资源；生产环境应替换成自己的节点服务，并先完成合约审计和业务合规评估。
-
-### 1. 安装与测试合约
-
-需要 Node.js 22.13 或更高版本：
-
-```powershell
-Set-Location .\points-server
-npm.cmd install
-npm.cmd test
-```
-
-### 2. 部署合约
-
-部署者应是离线管理的合约所有者；在线服务使用单独的发行方地址：
-
-```powershell
-$env:RPC_URL = "https://sepolia.base.org"
-$env:EXPECTED_CHAIN_ID = "84532"
-$env:DEPLOYER_PRIVATE_KEY = "0x部署钱包私钥"
-$env:ISSUER_ADDRESS = "0x在线发行方地址"
-npm.cmd run build
-npm.cmd run deploy
-```
-
-部署脚本会再次核对 chain ID，避免把测试配置误发到其他网络。部署后记录合约地址，并给部署钱包和发行方钱包准备少量测试网 ETH。私钥不得提交到 Git。
-
-### 3. 启动积分服务
-
-```powershell
-$env:RPC_URL = "你的 Base Sepolia RPC"
-$env:EXPECTED_CHAIN_ID = "84532"
-$env:EXPLORER_URL = "https://sepolia-explorer.base.org"
-$env:CONTRACT_ADDRESS = "0x已部署合约"
-$env:ISSUER_PRIVATE_KEY = "0x在线发行方私钥"
-$env:POINTS_HMAC_SECRET = "至少32位的高强度随机值"
-$env:DATA_FILE = ".\data\points.json"
-$env:DAILY_CHECKIN_POINTS = "10"
-npm.cmd start
-```
-
-服务启动时会确认网络、合约代码和发行方权限。`GET /health` 用于健康检查。`points-server/data` 保存匿名账户令牌哈希和签到状态，需要持久化备份；MVP 的 JSON 存储适合单实例，正式上线前应替换成带唯一约束和事务的数据库，并在可信反向代理处配置限流。
-
-### 4. 把服务地址写入 APK
-
-公网必须使用 HTTPS：
-
-```powershell
-.\gradlew.bat :app:assembleDebug -PPOINTS_SERVER_URL="https://points.example.com"
-```
-
-未传入 `POINTS_SERVER_URL` 时应用仍可正常聊天，但“我的 → 链上积分”会明确显示服务尚未配置，不会伪造本地余额。
-
-## CC 币
-
-`points-server` 还包含独立的可转账 CC 币和防机器人周度掉落控制器。它与不可转让
-应用积分分开：积分负责应用权益，CC 币负责公开链上资产。发行曲线、风控评分、
-Merkle 领取和 Base Sepolia 部署步骤见
-[`points-server/CC_TOKEN.md`](points-server/CC_TOKEN.md)。
-
 ## 构建
 
 ### iOS
@@ -224,7 +153,7 @@ xcodebuild -project KiraChat.xcodeproj -scheme KiraChat -sdk iphoneos -destinati
 
 仓库的 `.github/workflows/ios-ipa.yml` 会在 GitHub macOS Runner 上自动生成工程、复用 Android 端应用图标和豆乃GPT头像、构建设备 App，并打包 `KiraChat-0.9.0-unsigned.ipa`。这个 IPA 没有内置开发者签名：正式安装或分发前仍需使用自己的 Apple Developer Team、证书和描述文件重新签名。
 
-iOS 首版已移植四栏 Dock、角色资料、Tavern JSON 角色卡、世界书、本地群聊、微信式消息气泡、图片/拍照/位置、多协议直连 API、自动模型列表、联网搜索声明、Keychain 密钥、三语界面，以及使用系统听写 + 当前聊天模型 + 系统 TTS 的按住说话语音对话。Android 端各厂商原生 Realtime WebSocket、本地 Qwen GGUF、GPT/Copilot 账户登录和链上积分尚未移入 iOS；界面不会把这些尚未移植的能力伪装为可用。
+iOS 首版已移植四栏 Dock、角色资料、Tavern JSON 角色卡、世界书、本地群聊、微信式消息气泡、图片/拍照/位置、多协议直连 API、GPT/Copilot 账户登录、自动模型列表、联网搜索声明、Keychain 凭据、三语界面，以及使用系统听写 + 当前聊天模型 + 系统 TTS 的按住说话语音对话。Android 端各厂商原生 Realtime WebSocket 与本地 Qwen GGUF 尚未移入 iOS；界面不会把这些尚未移植的能力伪装为可用。
 
 ### Android
 
@@ -258,7 +187,7 @@ app\build\outputs\apk\debug\app-debug.apk
 - 聊天图片也会复制并压缩到应用私有目录；只有在发送消息时才交给当前配置的模型服务。
 - 位置权限仅用于用户主动点击“位置”后取得经纬度并发送；应用不在后台持续定位。
 - Android 备份被关闭，避免会话和密文随系统备份迁移。
-- 应用不包含统计或广告。启用链上积分后会创建独立的匿名积分账户，它不与 GPT、GitHub Copilot 或直连 API 凭据绑定。
+- 应用不包含统计或广告。
 
 ## 项目状态
 

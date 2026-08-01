@@ -1,5 +1,6 @@
 import PhotosUI
 import SwiftUI
+import UIKit
 
 struct MeView: View {
     @EnvironmentObject private var store: AppStore
@@ -43,8 +44,8 @@ struct MeView: View {
                             SettingsRow(
                                 icon: "link",
                                 title: "连接与账户",
-                                detail: store.settings.model.isEmpty
-                                    ? "尚未选择模型" : store.settings.model)
+                                detail: store.settings.activeModel.isEmpty
+                                    ? "尚未选择模型" : store.settings.activeModel)
                         }
                         Divider().padding(.leading, 58)
                         NavigationLink {
@@ -120,34 +121,91 @@ struct APISettingsView: View {
     @EnvironmentObject private var store: AppStore
     @State private var apiKey = ""
     @State private var isRefreshing = false
+    @State private var showLogin = false
+    @State private var showLogoutConfirmation = false
 
     var body: some View {
         Form {
             Section("生成方式") {
-                Picker("接口协议", selection: settingBinding(\.apiFormat)) {
-                    ForEach(APIFormat.allCases) { format in
-                        Text(format.displayName).tag(format)
+                Picker("聊天生成", selection: settingBinding(\.generationMode)) {
+                    ForEach(GenerationMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
                     }
                 }
-                .onChange(of: store.settings.apiFormat) { format in
-                    applyDefaultBaseURL(format)
+                .pickerStyle(.segmented)
+                .onChange(of: store.settings.generationMode) { _ in
+                    store.clearAvailableModels()
+                    refreshIfReady()
                 }
-                TextField("API 地址", text: settingBinding(\.baseURL))
-                    .textInputAutocapitalization(.never)
-                    .keyboardType(.URL)
-                SecureField("API Key", text: $apiKey)
-                    .textInputAutocapitalization(.never)
-                    .onChange(of: apiKey) { store.apiKey = $0 }
+            }
+
+            if store.settings.generationMode == .directAPI {
+                Section("直连 API") {
+                    Picker("接口协议", selection: settingBinding(\.apiFormat)) {
+                        ForEach(APIFormat.allCases) { format in
+                            Text(format.displayName).tag(format)
+                        }
+                    }
+                    .onChange(of: store.settings.apiFormat) { format in
+                        applyDefaultBaseURL(format)
+                    }
+                    TextField("API 地址", text: settingBinding(\.baseURL))
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.URL)
+                    SecureField("API Key", text: $apiKey)
+                        .textInputAutocapitalization(.never)
+                        .onChange(of: apiKey) { store.apiKey = $0 }
+                }
+            } else {
+                Section("账户") {
+                    Picker("账户类型", selection: settingBinding(\.accountProvider)) {
+                        ForEach(AccountProvider.allCases) { provider in
+                            Text(provider.displayName).tag(provider)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: store.settings.accountProvider) { _ in
+                        store.clearAvailableModels()
+                        refreshIfReady()
+                    }
+
+                    LabeledContent("状态") {
+                        Text(store.accountSummary)
+                            .foregroundStyle(currentAccountLoggedIn ? KiraTheme.green : Color.secondary)
+                    }
+
+                    if store.settings.accountProvider == .copilot {
+                        TextField("GitHub OAuth Client ID", text: settingBinding(\.githubOAuthClientID))
+                            .textInputAutocapitalization(.never)
+                        TextField("Copilot SDK 网关地址", text: settingBinding(\.copilotEndpoint))
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.URL)
+                    }
+
+                    Button {
+                        showLogin = true
+                    } label: {
+                        Label(
+                            currentAccountLoggedIn ? "重新登录" : "登录账户",
+                            systemImage: "person.crop.circle.badge.checkmark")
+                    }
+                    if currentAccountLoggedIn {
+                        Button("退出当前账户", role: .destructive) {
+                            showLogoutConfirmation = true
+                        }
+                    }
+
+                    Text(accountHelp)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section("模型") {
-                TextField("模型 ID", text: settingBinding(\.model))
+                TextField("模型 ID", text: modelBinding)
                     .textInputAutocapitalization(.never)
                 if !store.availableModels.isEmpty {
-                    Picker("接口返回的模型", selection: settingBinding(\.model)) {
-                        if store.settings.model.isEmpty {
-                            Text("请选择").tag("")
-                        }
+                    Picker("服务返回的模型", selection: modelBinding) {
                         ForEach(store.availableModels, id: \.self) { model in
                             Text(model).tag(model)
                         }
@@ -181,7 +239,7 @@ struct APISettingsView: View {
             }
 
             Section {
-                Text("API Key 只保存在本机 Keychain；普通设置和聊天备份中不包含密钥。局域网 HTTP 仅应连接可信服务。")
+                Text("API Key 与 OAuth 令牌只保存在本机 Keychain；普通设置和聊天备份中不包含凭据。账户订阅只用于对应服务，不会转换成通用 API Key。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -189,10 +247,52 @@ struct APISettingsView: View {
         .navigationTitle("连接与账户")
         .onAppear {
             apiKey = store.apiKey
-            if !apiKey.isEmpty && store.availableModels.isEmpty {
-                Task { await store.refreshModels() }
-            }
+            refreshIfReady()
         }
+        .sheet(isPresented: $showLogin) {
+            AccountLoginView(provider: store.settings.accountProvider)
+                .environmentObject(store)
+        }
+        .alert("退出当前账户？", isPresented: $showLogoutConfirmation) {
+            Button("取消", role: .cancel) {}
+            Button("退出", role: .destructive) { store.logoutCurrentAccount() }
+        } message: {
+            Text("只会删除本机 Keychain 中的登录令牌，不会影响你的订阅或网站账户。")
+        }
+    }
+
+    private var currentAccountLoggedIn: Bool {
+        store.settings.accountProvider == .gpt
+            ? store.hasGPTAccount : store.hasCopilotAccount
+    }
+
+    private var accountHelp: String {
+        if store.settings.accountProvider == .gpt {
+            return NSLocalizedString("在 OpenAI 官方页面完成设备授权；应用不会要求或读取 ChatGPT 密码。生成能力取决于账户的 Codex 访问权限。", comment: "")
+        }
+        return NSLocalizedString("使用 GitHub 官方设备授权和你自己的 Copilot 订阅。OAuth App 必须启用 Device Flow，聊天请求发送到你配置的官方 Copilot SDK 网关。", comment: "")
+    }
+
+    private var modelBinding: Binding<String> {
+        Binding(
+            get: {
+                guard store.settings.generationMode == .account else {
+                    return store.settings.model
+                }
+                return store.settings.accountProvider == .gpt
+                    ? store.settings.gptModel : store.settings.copilotModel
+            },
+            set: { value in
+                store.updateSettings { settings in
+                    if settings.generationMode == .directAPI {
+                        settings.model = value
+                    } else if settings.accountProvider == .gpt {
+                        settings.gptModel = value
+                    } else {
+                        settings.copilotModel = value
+                    }
+                }
+            })
     }
 
     private func settingBinding<Value>(_ keyPath: WritableKeyPath<AppSettings, Value>) -> Binding<Value> {
@@ -219,6 +319,143 @@ struct APISettingsView: View {
             settings.model = ""
         }
         Task { await store.refreshModels() }
+    }
+
+    private func refreshIfReady() {
+        guard store.availableModels.isEmpty else { return }
+        if store.settings.generationMode == .directAPI {
+            guard !store.settings.baseURL.isEmpty else { return }
+        } else if !currentAccountLoggedIn {
+            return
+        } else if store.settings.accountProvider == .copilot,
+                  store.settings.copilotEndpoint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return
+        }
+        Task { await store.refreshModels() }
+    }
+}
+
+private struct AccountLoginView: View {
+    @EnvironmentObject private var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+    let provider: AccountProvider
+
+    @State private var userCode = ""
+    @State private var verificationURL: URL?
+    @State private var status = "正在获取验证码…"
+    @State private var errorMessage = ""
+    @State private var loginTask: Task<Void, Never>?
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 22) {
+                Image(systemName: provider == .gpt ? "sparkles" : "chevron.left.forwardslash.chevron.right")
+                    .font(.system(size: 42, weight: .semibold))
+                    .foregroundStyle(KiraTheme.green)
+                    .frame(width: 82, height: 82)
+                    .background(KiraTheme.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 24))
+
+                Text(provider == .gpt ? "登录 GPT 账户" : "登录 GitHub Copilot")
+                    .font(.title2.bold())
+                Text(status)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                if !userCode.isEmpty {
+                    Text(userCode)
+                        .font(.system(.title, design: .monospaced, weight: .bold))
+                        .tracking(2)
+                        .textSelection(.enabled)
+                        .padding(.vertical, 15)
+                        .frame(maxWidth: .infinity)
+                        .background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+
+                    Button {
+                        UIPasteboard.general.string = userCode
+                        if let verificationURL { openURL(verificationURL) }
+                    } label: {
+                        Label(
+                            provider == .gpt ? "复制并打开 OpenAI" : "复制并打开 GitHub",
+                            systemImage: "safari")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(KiraTheme.green)
+                } else if errorMessage.isEmpty {
+                    ProgressView()
+                }
+
+                if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                    Button("重试") { startLogin() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(KiraTheme.green)
+                }
+                Spacer()
+            }
+            .padding(24)
+            .navigationTitle("设备授权")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+            }
+        }
+        .interactiveDismissDisabled(loginTask != nil && errorMessage.isEmpty)
+        .onAppear { startLogin() }
+        .onDisappear {
+            loginTask?.cancel()
+            loginTask = nil
+        }
+    }
+
+    private func startLogin() {
+        loginTask?.cancel()
+        userCode = ""
+        verificationURL = nil
+        errorMessage = ""
+        status = NSLocalizedString("正在获取验证码…", comment: "")
+        loginTask = Task {
+            do {
+                switch provider {
+                case .gpt:
+                    let challenge = try await OpenAIAccountAuth.requestDeviceCode()
+                    try Task.checkCancellation()
+                    userCode = challenge.userCode
+                    verificationURL = challenge.verificationURL
+                    status = NSLocalizedString("请复制验证码并在 OpenAI 官方页面确认", comment: "")
+                    let tokens = try await OpenAIAccountAuth.finishDeviceLogin(challenge)
+                    try Task.checkCancellation()
+                    store.saveGPTAccount(tokens)
+                case .copilot:
+                    let challenge = try await GitHubCopilotAuth.requestDeviceCode(
+                        clientID: store.settings.githubOAuthClientID)
+                    try Task.checkCancellation()
+                    userCode = challenge.userCode
+                    verificationURL = challenge.verificationURL
+                    status = NSLocalizedString("请复制验证码并在 GitHub 官方页面确认", comment: "")
+                    let result = try await GitHubCopilotAuth.finishDeviceLogin(challenge)
+                    try Task.checkCancellation()
+                    store.saveCopilotAccount(result)
+                }
+                store.clearAvailableModels()
+                await store.refreshModels()
+                loginTask = nil
+                dismiss()
+            } catch is CancellationError {
+                loginTask = nil
+            } catch {
+                errorMessage = error.localizedDescription
+                status = NSLocalizedString("登录失败", comment: "")
+                loginTask = nil
+            }
+        }
     }
 }
 
