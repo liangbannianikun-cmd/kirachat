@@ -7,6 +7,7 @@ struct MeView: View {
     @State private var persona = ""
 
     var body: some View {
+        let personaAvatarData = store.settings.personaAvatarData
         ZStack {
             KiraTheme.page.ignoresSafeArea()
             ScrollView {
@@ -14,7 +15,7 @@ struct MeView: View {
                     HStack(spacing: 17) {
                         PhotosPicker(selection: $avatarItem, matching: .images) {
                             ZStack(alignment: .bottomTrailing) {
-                                PersonaAvatar(data: store.settings.personaAvatarData, size: 76)
+                                PersonaAvatar(data: personaAvatarData, size: 76)
                                 Image(systemName: "pencil")
                                     .font(.caption.bold())
                                     .frame(width: 25, height: 25)
@@ -253,4 +254,3 @@ private struct AboutView: View {
         .navigationTitle("关于澄语")
     }
 }
-

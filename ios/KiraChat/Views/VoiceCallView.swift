@@ -205,7 +205,7 @@ final class VoiceCallController: NSObject, ObservableObject, AVSpeechSynthesizer
             try session.setCategory(
                 .playAndRecord,
                 mode: .voiceChat,
-                options: [.defaultToSpeaker, .allowBluetooth])
+                options: [.defaultToSpeaker, .allowBluetoothHFP])
             try session.setActive(true, options: .notifyOthersOnDeactivation)
 
             let request = SFSpeechAudioBufferRecognitionRequest()
@@ -255,27 +255,23 @@ final class VoiceCallController: NSObject, ObservableObject, AVSpeechSynthesizer
         let context = history
         let config = settings
         let credential = apiKey
-        Task { [weak self] in
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
                 let reply = try await APIService.complete(
                     character: card,
                     history: context,
                     settings: config,
                     apiKey: credential)
-                await MainActor.run {
-                    guard let self else { return }
-                    self.history.append(ChatMessage(role: .assistant, content: reply))
-                    self.transcript = reply
-                    self.status = NSLocalizedString("通话中 · 对方正在说话", comment: "")
-                    let utterance = AVSpeechUtterance(string: reply)
-                    utterance.voice = AVSpeechSynthesisVoice(language: Locale.current.identifier)
-                    utterance.rate = AVSpeechUtteranceDefaultSpeechRate
-                    self.synthesizer.speak(utterance)
-                }
+                self.history.append(ChatMessage(role: .assistant, content: reply))
+                self.transcript = reply
+                self.status = NSLocalizedString("通话中 · 对方正在说话", comment: "")
+                let utterance = AVSpeechUtterance(string: reply)
+                utterance.voice = AVSpeechSynthesisVoice(language: Locale.current.identifier)
+                utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+                self.synthesizer.speak(utterance)
             } catch {
-                await MainActor.run {
-                    self?.status = error.localizedDescription
-                }
+                self.status = error.localizedDescription
             }
         }
     }
