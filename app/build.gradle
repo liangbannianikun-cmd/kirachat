@@ -2,6 +2,11 @@ plugins {
     id "com.android.application"
 }
 
+def pointsServerUrl = (project.findProperty("POINTS_SERVER_URL") ?: "").toString()
+def escapedPointsServerUrl = pointsServerUrl
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
@@ -14,6 +19,8 @@ android {
         versionName "0.9.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "POINTS_SERVER_URL",
+                "\"${escapedPointsServerUrl}\""
     }
 
     buildTypes {
@@ -21,6 +28,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
+    }
+
+    packagingOptions {
+        doNotStrip "**/*.so"
     }
 
     compileOptions {

@@ -59,8 +59,8 @@ public final class GroupPromptBuilder {
         }
         system.append("\n回复应自然承接最近发言；避免重复其他成员已经说过的内容。");
         if (config.webSearch) {
-            system.append("\n遇到最新信息或不确定事实时，可按需使用接口提供的联网搜索工具；"
-                    + "不得伪造搜索结果或来源。");
+            system.append("\n应用会在需要时把本轮联网搜索结果作为额外系统资料提供。"
+                    + "只引用实际提供的资料和链接；不得伪造搜索结果或来源。");
         }
         PromptBuilder.appendResponseLanguage(system);
 

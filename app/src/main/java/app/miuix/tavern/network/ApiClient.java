@@ -1,5 +1,7 @@
 package app.miuix.tavern.network;
 
+import android.content.Context;
+
 import app.miuix.tavern.data.SecureStore;
 import app.miuix.tavern.model.AppConfig;
 
@@ -61,6 +63,7 @@ public final class ApiClient {
         private volatile boolean cancelled;
         private volatile HttpURLConnection connection;
         private volatile okhttp3.Call okHttpCall;
+        private volatile java.lang.Process process;
 
         public void cancel() {
             cancelled = true;
@@ -68,10 +71,22 @@ public final class ApiClient {
             if (active != null) active.disconnect();
             okhttp3.Call activeOkHttp = okHttpCall;
             if (activeOkHttp != null) activeOkHttp.cancel();
+            java.lang.Process activeProcess = process;
+            if (activeProcess != null) activeProcess.destroy();
         }
 
         public boolean isCancelled() {
             return cancelled;
+        }
+
+        void attachProcess(java.lang.Process process) {
+            this.process = process;
+            if (cancelled && process != null) process.destroy();
+        }
+
+        void attachOkHttpCall(okhttp3.Call call) {
+            this.okHttpCall = call;
+            if (cancelled && call != null) call.cancel();
         }
     }
 
@@ -99,24 +114,17 @@ public final class ApiClient {
     private ApiClient() {
     }
 
-    public static Call generate(AppConfig config, SecureStore secureStore, String apiKey,
+    public static Call generate(Context context, AppConfig config,
+                                SecureStore secureStore, String apiKey,
                                 JSONArray messages, StreamCallback callback) {
         final Call call = new Call();
         EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    if (AppConfig.GENERATION_ACCOUNT.equals(config.generation)) {
-                        if (AppConfig.ACCOUNT_CLAUDE.equals(config.accountProvider)) {
-                            generateThroughClaudeAccount(
-                                    call, config, secureStore, messages, callback);
-                        } else {
-                            generateThroughGptAccount(
-                                    call, config, secureStore, messages, callback);
-                        }
-                    } else {
-                        generateThroughDirectApi(call, config, apiKey, messages, callback);
-                    }
+                    generateWithSearchFallback(
+                            context, call, config, secureStore,
+                            apiKey, messages, callback);
                     if (!call.isCancelled()) callback.onComplete();
                 } catch (Exception error) {
                     if (!call.isCancelled()) callback.onError(readableError(error));
@@ -124,6 +132,142 @@ public final class ApiClient {
             }
         });
         return call;
+    }
+
+    private static void generateWithSearchFallback(
+            Context context,
+            Call call,
+            AppConfig config,
+            SecureStore secureStore,
+            String apiKey,
+            JSONArray messages,
+            StreamCallback callback) throws Exception {
+        if (!config.webSearch) {
+            generateByMode(
+                    context, call, config, secureStore,
+                    apiKey, messages, callback);
+            return;
+        }
+        if (AppConfig.GENERATION_LOCAL.equals(config.generation)) {
+            JSONArray augmented = WebSearchClient.augment(call, messages);
+            if (!call.isCancelled()) {
+                generateByMode(
+                        context, call, config, secureStore,
+                        apiKey, augmented, callback);
+            }
+            return;
+        }
+
+        TrackingCallback nativeCallback = new TrackingCallback(callback);
+        try {
+            generateByMode(
+                    context, call, config, secureStore,
+                    apiKey, messages, nativeCallback);
+        } catch (Exception nativeError) {
+            if (call.isCancelled()
+                    || nativeCallback.hasOutput()
+                    || !isNativeSearchUnavailable(nativeError)) {
+                throw nativeError;
+            }
+            AppConfig alternate = nativeSearchAlternative(config);
+            if (alternate != null) {
+                TrackingCallback alternateCallback =
+                        new TrackingCallback(callback);
+                try {
+                    generateByMode(
+                            context, call, alternate, secureStore,
+                            apiKey, messages, alternateCallback);
+                    return;
+                } catch (Exception alternateError) {
+                    if (call.isCancelled() || alternateCallback.hasOutput()) {
+                        throw alternateError;
+                    }
+                }
+            }
+            JSONArray augmented = WebSearchClient.augment(call, messages);
+            if (call.isCancelled()) return;
+            AppConfig fallback = AppConfig.fromJson(config.toJson());
+            fallback.webSearch = false;
+            generateByMode(
+                    context, call, fallback, secureStore,
+                    apiKey, augmented, callback);
+        }
+    }
+
+    private static AppConfig nativeSearchAlternative(AppConfig source)
+            throws JSONException {
+        if (!AppConfig.GENERATION_DIRECT_API.equals(source.generation)) {
+            return null;
+        }
+        String format = source.directApiFormat;
+        if (AppConfig.DIRECT_FORMAT_CLAUDE.equals(format)
+                || AppConfig.DIRECT_FORMAT_GEMINI.equals(format)
+                || AppConfig.DIRECT_FORMAT_OLLAMA.equals(format)
+                || AppConfig.DIRECT_FORMAT_AZURE.equals(format)) {
+            return null;
+        }
+        AppConfig alternate = AppConfig.fromJson(source.toJson());
+        alternate.directApiFormat = AppConfig.DIRECT_FORMAT_RESPONSES.equals(format)
+                ? AppConfig.DIRECT_FORMAT_CHAT
+                : AppConfig.DIRECT_FORMAT_RESPONSES;
+        return alternate;
+    }
+
+    private static void generateByMode(
+            Context context,
+            Call call,
+            AppConfig config,
+            SecureStore secureStore,
+            String apiKey,
+            JSONArray messages,
+            StreamCallback callback) throws Exception {
+        if (AppConfig.GENERATION_LOCAL.equals(config.generation)) {
+            LocalModelEngine.generate(
+                    context.getApplicationContext(), call,
+                    config, messages, callback);
+        } else if (AppConfig.GENERATION_ACCOUNT.equals(config.generation)) {
+            if (AppConfig.ACCOUNT_COPILOT.equals(config.accountProvider)) {
+                generateThroughCopilotAccount(
+                        call, config, secureStore, messages, callback);
+            } else {
+                generateThroughGptAccount(
+                        call, config, secureStore, messages, callback);
+            }
+        } else {
+            generateThroughDirectApi(
+                    call, config, apiKey, messages, callback);
+        }
+    }
+
+    private static boolean isNativeSearchUnavailable(Exception error) {
+        int status = error instanceof EndpointException
+                ? ((EndpointException) error).status : 0;
+        String message = error.getMessage() == null
+                ? "" : error.getMessage().toLowerCase(Locale.ROOT);
+        boolean toolMentioned = message.contains("web_search")
+                || message.contains("web search")
+                || message.contains("web_search_options")
+                || message.contains("google_search")
+                || message.contains("google search")
+                || message.contains("enable_search")
+                || message.contains("unsupported tool")
+                || message.contains("invalid tool")
+                || message.contains("does not support tools")
+                || (message.contains("tool")
+                && (message.contains("unknown")
+                || message.contains("unsupported")
+                || message.contains("not support")));
+        boolean validationFailure = status == 400 || status == 404
+                || status == 422 || status == 501
+                || message.contains("http 400")
+                || message.contains("http 404")
+                || message.contains("http 422")
+                || message.contains("unknown field")
+                || message.contains("unknown parameter")
+                || message.contains("unrecognized")
+                || message.contains("extra inputs");
+        if (status == 400 || status == 422 || status == 501) return true;
+        return toolMentioned && validationFailure;
     }
 
     public static void testDirectApi(
@@ -199,20 +343,20 @@ public final class ApiClient {
 
     public static void fetchAccountModels(
             AppConfig config, SecureStore secureStore, ModelsCallback callback) {
-        if (!AppConfig.ACCOUNT_CLAUDE.equals(config.accountProvider)) {
+        if (!AppConfig.ACCOUNT_COPILOT.equals(config.accountProvider)) {
             fetchGptModels(secureStore, callback);
             return;
         }
         EXECUTOR.execute(() -> {
             try {
-                if (!secureStore.hasClaudeAccount()) {
-                    throw new IOException("请先保存 Claude API Key 或访问令牌");
+                if (!secureStore.hasCopilotAccount()) {
+                    throw new IOException("请先登录 GitHub Copilot 账户");
                 }
-                AppConfig claude = claudeAccountConfig(config);
+                AppConfig copilot = copilotAccountConfig(config);
                 List<String> models = fetchDirectModelsSync(
-                        claude, secureStore.getClaudeAccessToken());
+                        copilot, secureStore.getCopilotAccessToken());
                 if (models.isEmpty()) {
-                    throw new IOException("Claude 账户没有返回可用模型");
+                    throw new IOException("GitHub Copilot 没有返回可用模型");
                 }
                 callback.onSuccess(models);
             } catch (Exception error) {
@@ -325,9 +469,27 @@ public final class ApiClient {
                 .put("stream", true);
         if (config.webSearch
                 && !AppConfig.DIRECT_FORMAT_OLLAMA.equals(format)) {
-            body.put("web_search_options", new JSONObject());
+            addNativeChatSearch(body, config.baseUrl);
         }
         return body;
+    }
+
+    private static void addNativeChatSearch(
+            JSONObject body, String baseUrl) throws JSONException {
+        String endpoint = baseUrl == null
+                ? "" : baseUrl.toLowerCase(Locale.ROOT);
+        if (endpoint.contains("dashscope")
+                || endpoint.contains("aliyuncs.com")
+                || endpoint.contains("maas.aliyun")) {
+            body.put("enable_search", true);
+            return;
+        }
+        if (endpoint.contains("openrouter.ai")) {
+            body.put("tools", new JSONArray().put(
+                    new JSONObject().put("type", "openrouter:web_search")));
+            return;
+        }
+        body.put("web_search_options", new JSONObject());
     }
 
     private static void streamDirectByFormat(
@@ -727,35 +889,40 @@ public final class ApiClient {
         return value + (value.contains("?") ? "&" : "?") + "alt=sse";
     }
 
-    private static AppConfig claudeAccountConfig(AppConfig source) {
+    private static AppConfig copilotAccountConfig(AppConfig source)
+            throws IOException {
+        String endpoint = source.copilotEndpoint == null
+                ? "" : source.copilotEndpoint.trim();
+        if (endpoint.isEmpty()) {
+            throw new IOException("请先填写 Copilot SDK 网关地址");
+        }
         AppConfig config = new AppConfig();
-        config.baseUrl = "https://api.anthropic.com";
-        config.directApiFormat = AppConfig.DIRECT_FORMAT_CLAUDE;
-        config.model = source.claudeModel;
+        config.baseUrl = endpoint;
+        config.directApiFormat = AppConfig.DIRECT_FORMAT_CHAT;
+        config.model = source.copilotModel;
         config.showReasoning = source.showReasoning;
         config.webSearch = source.webSearch;
         config.groupAutonomousMessages = source.groupAutonomousMessages;
         return config;
     }
 
-    private static void generateThroughClaudeAccount(
+    private static void generateThroughCopilotAccount(
             Call call,
             AppConfig config,
             SecureStore secureStore,
             JSONArray messages,
             StreamCallback callback) throws Exception {
-        if (!secureStore.hasClaudeAccount()) {
-            throw new IOException(
-                    "请先在“连接与账户”中保存 Claude API Key 或访问令牌");
+        if (!secureStore.hasCopilotAccount()) {
+            throw new IOException("请先在“连接与账户”中登录 GitHub Copilot");
         }
-        AppConfig claude = claudeAccountConfig(config);
-        if (claude.model == null || claude.model.trim().isEmpty()) {
-            throw new IOException("请先选择 Claude 账户模型");
+        AppConfig copilot = copilotAccountConfig(config);
+        if (copilot.model == null || copilot.model.trim().isEmpty()) {
+            throw new IOException("请先选择 GitHub Copilot 模型");
         }
         generateThroughDirectApi(
                 call,
-                claude,
-                secureStore.getClaudeAccessToken(),
+                copilot,
+                secureStore.getCopilotAccessToken(),
                 messages,
                 callback);
     }
@@ -927,8 +1094,8 @@ public final class ApiClient {
                 .put("effort", "medium")
                 .put("summary", "auto"));
         if (config.webSearch) {
-            body.put("tools", new JSONArray()
-                    .put(new JSONObject().put("type", "web_search")));
+            body.put("tools", new JSONArray().put(
+                    new JSONObject().put("type", "web_search")));
         }
         return body;
     }
@@ -937,8 +1104,14 @@ public final class ApiClient {
             AppConfig config, JSONArray messages) throws JSONException {
         JSONObject body = responsesGenerationBody(config.model.trim(), messages);
         if (config.webSearch) {
-            body.put("tools", new JSONArray()
-                    .put(new JSONObject().put("type", "web_search")));
+            body.put("tools", new JSONArray().put(
+                    new JSONObject().put(
+                            "type",
+                            config.baseUrl != null
+                                    && config.baseUrl.toLowerCase(Locale.ROOT)
+                                    .contains("openrouter.ai")
+                                    ? "openrouter:web_search"
+                                    : "web_search")));
         }
         return body;
     }
@@ -1032,8 +1205,8 @@ public final class ApiClient {
                             .put(new JSONObject().put("text", system.toString()))));
         }
         if (config.webSearch) {
-            body.put("tools", new JSONArray()
-                    .put(new JSONObject().put("google_search", new JSONObject())));
+            body.put("tools", new JSONArray().put(
+                    new JSONObject().put("google_search", new JSONObject())));
         }
         return body;
     }
@@ -1931,6 +2104,35 @@ public final class ApiClient {
         if (message == null || message.trim().isEmpty()) message = error.getClass().getSimpleName();
         if (message.length() > 240) message = message.substring(0, 240) + "…";
         return message;
+    }
+
+    private static final class TrackingCallback implements StreamCallback {
+        private final StreamCallback delegate;
+        private boolean output;
+
+        TrackingCallback(StreamCallback delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void onDelta(String delta) {
+            if (delta != null && !delta.isEmpty()) output = true;
+            delegate.onDelta(delta);
+        }
+
+        @Override
+        public void onComplete() {
+            delegate.onComplete();
+        }
+
+        @Override
+        public void onError(String message) {
+            delegate.onError(message);
+        }
+
+        boolean hasOutput() {
+            return output;
+        }
     }
 
     private static final class ParsedDelta {

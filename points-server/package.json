@@ -1,0 +1,31 @@
+{
+  "name": "chengyu-points-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Onchain points, CC token, emission controller, and anti-abuse drop tooling.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "hardhat build",
+    "test": "hardhat test solidity && node --test test/*.test.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "deploy:cc": "node scripts/deploy-cc.mjs",
+    "drop:build": "node scripts/build-drop.mjs",
+    "verify:cc:local": "node scripts/verify-local-cc.mjs",
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.6.1",
+    "@openzeppelin/merkle-tree": "1.0.8",
+    "ethers": "6.17.0"
+  },
+  "devDependencies": {
+    "hardhat": "3.11.1"
+  },
+  "overrides": {
+    "adm-zip": "0.6.0",
+    "uuid": "11.1.1"
+  }
+}

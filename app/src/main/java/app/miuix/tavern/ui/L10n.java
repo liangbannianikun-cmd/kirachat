@@ -57,6 +57,24 @@ public final class L10n {
             Pattern.compile("^已获取 (\\d+) 个模型 · 可输入筛选$");
     private static final Pattern CACHED_MODELS =
             Pattern.compile("^获取失败 · 保留 (\\d+) 个缓存模型$");
+    private static final Pattern PROVIDER_MODELS =
+            Pattern.compile("^已从厂商获取 (\\d+) 个模型$");
+    private static final Pattern PROVIDER_CACHED_MODELS =
+            Pattern.compile("^厂商列表暂不可用 · 保留 (\\d+) 个缓存模型$");
+    private static final Pattern LOCAL_DOWNLOAD_PROGRESS =
+            Pattern.compile("^下载中 (\\d+)% · (.+) / (.+)$");
+    private static final Pattern LOCAL_PAUSED_PROGRESS =
+            Pattern.compile("^已暂停 · (.+) / (.+)$");
+    private static final Pattern LOCAL_SELECTED =
+            Pattern.compile("^已切换到 (.+) 本地生成$");
+    private static final Pattern LOCAL_DELETE =
+            Pattern.compile("^删除 (Qwen3\\.5-.+)？$");
+    private static final Pattern LOCAL_CHAT_ROUTE =
+            Pattern.compile("^聊天将在本机由 (.+) 生成，不上传消息。$");
+    private static final Pattern LOCAL_DOWNLOAD_FIRST =
+            Pattern.compile("^请先下载 (.+)，再点按“使用”。$");
+    private static final Pattern LOCAL_ENABLE_FIRST =
+            Pattern.compile("^请先在“连接与账户 → 本地模型”下载并启用 (.+)$");
 
     static {
         add("消息", "Messages", "メッセージ");
@@ -87,7 +105,7 @@ public final class L10n {
         add("关于澄语", "About 澄语", "澄语について");
         add("设计说明", "Design notes", "デザインについて");
         add("密钥由 Android Keystore 加密", "Keys are encrypted by Android Keystore", "キーはAndroid Keystoreで暗号化されます");
-        add("直连 API、GPT / Claude 账户、人格", "Direct API, GPT / Claude accounts, persona", "直接API、GPT / Claudeアカウント、ペルソナ");
+        add("直连 API、GPT / GitHub Copilot 账户、人格", "Direct API, GPT / GitHub Copilot accounts, persona", "直接API、GPT / GitHub Copilotアカウント、ペルソナ");
         add("安全", "Secure", "安全");
         add(" · 点击头像可更换", " · Tap the avatar to change it", " · アバターをタップして変更");
         add("聊天信息", "Chat info", "チャット情報");
@@ -165,15 +183,31 @@ public final class L10n {
         add("允许麦克风后即可开始实时对话", "Allow microphone access to start a realtime conversation", "マイクを許可するとリアルタイム会話を開始できます");
         add("没有麦克风权限", "Microphone permission is missing", "マイクの権限がありません");
         add("前往设置", "Open settings", "設定を開く");
-        add("需要配置短期令牌服务", "A short-lived token service is required", "短期トークンサービスの設定が必要です");
+        add("需要配置实时语音服务", "Realtime voice setup is required", "リアルタイム音声の設定が必要です");
         add("通话连接失败", "Call connection failed", "通話の接続に失敗しました");
-        add("ChatGPT 登录不能直接用于 Realtime API。", "ChatGPT sign-in cannot be used directly with the Realtime API.", "ChatGPTログインはRealtime APIに直接使用できません。");
+        add("需要 API Key", " requires an API key", "にはAPIキーが必要です");
+        add("需要填写实时适配器 WSS 地址", " requires a realtime-adapter WSS URL", "にはリアルタイムアダプターのWSS URLが必要です");
+        add("需要填写厂商 WSS 地址", " requires a provider WSS URL", "にはプロバイダーのWSS URLが必要です");
+        add("ElevenAgents 需要 Agent ID 或已签名 WSS 地址",
+                "ElevenAgents requires an Agent ID or signed WSS URL",
+                "ElevenAgentsにはAgent IDまたは署名済みWSS URLが必要です");
+        add("。请在“连接与账户”的 Realtime 语音中完成配置。",
+                ". Complete setup under Connections & accounts → Realtime voice.",
+                "。「接続とアカウント」→「Realtime音声」で設定してください。");
+        add("正在连接 ", "Connecting to ", "接続中：");
+        add("通话中 · 正在聆听", "In call · Listening", "通話中 · 聞いています");
+        add("通话中 · 你正在说话", "In call · You are speaking", "通話中 · あなたが話しています");
+        add("通话中 · 正在思考", "In call · Thinking", "通話中 · 考えています");
+        add(" 正在说话", " is speaking", "が話しています");
+        add("通话已结束", "Call ended", "通話が終了しました");
+        add("实时连接中断：", "Realtime connection interrupted: ", "リアルタイム接続が中断しました：");
+        add("实时连接配置错误：", "Realtime connection configuration error: ", "リアルタイム接続の設定エラー：");
+        add("无法启动音频：", "Unable to start audio: ", "音声を開始できません：");
+        add("麦克风读取失败：", "Microphone read failed: ", "マイクの読み取りに失敗しました：");
+        add("音频播放失败：", "Audio playback failed: ", "音声の再生に失敗しました：");
         add("语音通话需要麦克风权限。你可以在系统应用设置中重新允许。",
                 "Voice calls need microphone access. You can allow it again in system app settings.",
                 "音声通話にはマイクの権限が必要です。システムのアプリ設定から再度許可できます。");
-        add("请在“连接与账户”中填写你控制的短期令牌服务。",
-                "Enter a short-lived token service you control under Connections & accounts.",
-                "「接続とアカウント」で管理している短期トークンサービスを設定してください。");
 
         add("角色资料", "Character profile", "キャラクター情報");
         add("来源：", "Source: ", "提供元：");
@@ -218,9 +252,9 @@ public final class L10n {
                 "グループには2人以上のキャラクターが必要です。「メッセージ」右上の「＋」から追加してください。サーバー同期は不要です。");
 
         add("连接与账户", "Connections & accounts", "接続とアカウント");
-        add("可使用 GPT 兼容、Claude、Gemini 等 API 直连，也可选择已配置的 GPT 或 Claude 账户生成聊天。",
-                "Connect directly to GPT-compatible, Claude, or Gemini APIs, or generate chats with a configured GPT or Claude account.",
-                "GPT互換、Claude、Gemini APIへ直接接続するか、設定済みのGPT / Claudeアカウントでチャットを生成できます。");
+        add("可使用 GPT 兼容、Claude、Gemini 等 API 直连，也可选择已配置的 GPT / GitHub Copilot 账户或本地 Qwen3.5 生成聊天。",
+                "Connect directly to GPT-compatible, Claude, or Gemini APIs, or generate chats with a configured GPT / GitHub Copilot account or local Qwen3.5.",
+                "GPT互換、Claude、Gemini APIへ直接接続するか、設定済みのGPT / GitHub CopilotアカウントまたはローカルQwen3.5でチャットを生成できます。");
         add("直连 API", "Direct API", "直接API");
         add("多协议", "Multiple protocols", "複数プロトコル");
         add("接口协议", "API protocol", "APIプロトコル");
@@ -235,6 +269,9 @@ public final class L10n {
         add("等待获取模型列表", "Waiting for model list", "モデル一覧を待っています");
         add("测试 API", "Test API", "APIをテスト");
         add("允许角色联网搜索", "Allow web search", "ウェブ検索を許可");
+        add("优先调用模型或厂商的原生搜索；不支持时才由应用检索并注入结果。应用兜底时，查询会发送到公共搜索服务",
+                "Native model or provider search is tried first. If unsupported, the app searches and injects results; fallback queries are sent to a public search service.",
+                "モデルまたはプロバイダーのネイティブ検索を優先し、非対応の場合のみアプリが検索結果を渡します。フォールバック時は検索語が公開検索サービスへ送信されます。");
         add("群聊主动发言", "Spontaneous group messages", "グループで自発的に発言");
         add("群聊空闲时，角色会偶尔自行发起话题",
                 "Characters occasionally start a topic while the group is idle",
@@ -249,11 +286,33 @@ public final class L10n {
         add("登录 GPT 账户", "Sign in to GPT", "GPTにログイン");
         add("重新登录", "Sign in again", "再ログイン");
         add("退出", "Sign out", "ログアウト");
-        add("保存 Claude 凭据", "Save Claude credential", "Claude認証情報を保存");
-        add("更新 Claude 凭据", "Update Claude credential", "Claude認証情報を更新");
-        add("尚未配置 Claude 账户", "Claude account is not configured", "Claudeアカウントは未設定です");
-        add("Claude 凭据已保存在本机", "Claude credential is stored on this device", "Claude認証情報は端末に保存されています");
-        add("Claude API Key / 访问令牌", "Claude API key / access token", "Claude APIキー / アクセストークン");
+        add("GPT / GitHub Copilot", "GPT / GitHub Copilot", "GPT / GitHub Copilot");
+        add("GitHub OAuth Client ID", "GitHub OAuth Client ID", "GitHub OAuthクライアントID");
+        add("OAuth App 中启用 Device Flow 后填写",
+                "Enter this after enabling Device Flow in the OAuth App",
+                "OAuth AppでDevice Flowを有効にしてから入力");
+        add("Copilot SDK 网关", "Copilot SDK gateway", "Copilot SDKゲートウェイ");
+        add("登录 GitHub Copilot", "Sign in to GitHub Copilot", "GitHub Copilotにログイン");
+        add("重新登录 GitHub", "Sign in to GitHub again", "GitHubに再ログイン");
+        add("在 GitHub 页面输入此验证码", "Enter this code on GitHub", "GitHubでこのコードを入力");
+        add("复制并打开 GitHub", "Copy and open GitHub", "コピーしてGitHubを開く");
+        add("等待你在 GitHub 页面确认", "Waiting for confirmation on GitHub", "GitHubでの確認を待っています");
+        add("正在连接 GitHub…", "Connecting to GitHub…", "GitHubに接続中…");
+        add("未登录", "Not signed in", "未ログイン");
+        add("已登录 · GitHub Copilot", "Signed in · GitHub Copilot", "ログイン済み · GitHub Copilot");
+        add("已登录 · @", "Signed in · @", "ログイン済み · @");
+        add("使用 GitHub 官方 OAuth 设备授权和用户自己的 Copilot 订阅。安卓端通过你部署的官方 Copilot SDK 网关生成聊天；OAuth App 必须启用 Device Flow。",
+                "Uses GitHub's official OAuth device authorization and the user's own Copilot subscription. Android generates chats through your deployed official Copilot SDK gateway; Device Flow must be enabled for the OAuth App.",
+                "GitHub公式OAuthデバイス認証とユーザー自身のCopilotサブスクリプションを使用します。Androidはデプロイした公式Copilot SDKゲートウェイ経由でチャットを生成します。OAuth AppではDevice Flowを有効にしてください。");
+        add("聊天由已配置的 GitHub Copilot 账户生成。",
+                "Chats are generated by the configured GitHub Copilot account.",
+                "設定済みのGitHub Copilotアカウントでチャットを生成します。");
+        add("请先配置 GitHub Copilot 账户；未配置时发送会提示前往设置。",
+                "Configure a GitHub Copilot account first; sending will open a settings prompt until it is configured.",
+                "先にGitHub Copilotアカウントを設定してください。未設定のまま送信すると設定案内が表示されます。");
+        add("配置 GitHub Copilot 账户后自动获取",
+                "Models load after a GitHub Copilot account is configured",
+                "GitHub Copilotアカウント設定後に自動取得");
         add("聊天生成方式", "Chat generation", "チャット生成方法");
         add("聊天身份", "Chat identity", "チャット上の名前");
         add("我的称呼", "My name", "自分の呼び名");
@@ -261,16 +320,83 @@ public final class L10n {
                 "Change your avatar by tapping it on the Me page.",
                 "アバターは「自分」ページでタップして変更できます。");
         add("本地密钥保护", "Local credential protection", "ローカル認証情報の保護");
+        add("直连 API Key、GPT OAuth 令牌、GitHub OAuth 令牌和实时语音凭据均由 Android Keystore 生成的 AES-GCM 密钥加密。",
+                "Direct API keys, GPT OAuth tokens, GitHub OAuth tokens, and realtime voice credentials are encrypted with an AES-GCM key generated by Android Keystore.",
+                "直接APIキー、GPT OAuthトークン、GitHub OAuthトークン、リアルタイム音声認証情報はAndroid Keystoreが生成したAES-GCMキーで暗号化されます。");
         add("保存设置", "Save settings", "設定を保存");
         add("设置已保存在本机", "Settings saved on this device", "設定を端末に保存しました");
         add("Realtime 语音", "Realtime voice", "Realtime音声");
-        add("实验性", "Experimental", "試験機能");
-        add("短期令牌服务", "Short-lived token service", "短期トークンサービス");
-        add("令牌服务 Bearer", "Token service bearer", "トークンサービスBearer");
-        add("可选，仅用于访问你自己的令牌服务", "Optional; only used to access your token service", "任意。自分のトークンサービスへのアクセスにのみ使用");
-        add("服务需返回 OpenAI Realtime client secret JSON（含 value 字段）。",
-                "The service must return OpenAI Realtime client-secret JSON containing a value field.",
-                "サービスはvalueフィールドを含むOpenAI Realtime client secret JSONを返す必要があります。");
+        add("多厂商", "Multiple providers", "複数プロバイダー");
+        add("选择实时语音厂商与模型。支持原生 WebSocket 的服务会直接连接；需要云端签名或专用 SDK 的服务使用实时适配器 WSS。",
+                "Choose a realtime voice provider and model. Services with native WebSocket support connect directly; services requiring cloud signing or a dedicated SDK use a realtime-adapter WSS.",
+                "リアルタイム音声のプロバイダーとモデルを選択します。ネイティブWebSocket対応サービスには直接接続し、クラウド署名や専用SDKが必要なサービスにはリアルタイムアダプターWSSを使用します。");
+        add("语音服务", "Voice provider", "音声サービス");
+        add("选择实时语音服务", "Choose realtime voice provider", "リアルタイム音声サービスを選択");
+        add("实时模型", "Realtime model", "リアルタイムモデル");
+        add("选择厂商支持的实时模型", "Choose a supported realtime model", "対応するリアルタイムモデルを選択");
+        add("正在从厂商获取模型…", "Getting models from provider…", "プロバイダーからモデルを取得中…");
+        add("填写 API Key 后自动获取", "Models load after an API key is entered", "APIキー入力後に自動取得");
+        add("厂商列表暂不可用 · 使用内置列表", "Provider list unavailable · Using built-in list", "プロバイダー一覧を取得できません · 内蔵一覧を使用");
+        add("获取厂商模型失败：", "Failed to load provider models: ", "プロバイダーのモデル取得に失敗：");
+        add("连接地址 / 适配器 WSS", "Endpoint / adapter WSS", "接続先 / アダプターWSS");
+        add("留空使用厂商默认地址", "Leave blank to use the provider default", "空欄でプロバイダーの既定値を使用");
+        add("API Key / 会话凭据", "API key / session credential", "APIキー / セッション認証情報");
+        add("按厂商独立加密保存在 Android Keystore",
+                "Encrypted separately per provider in Android Keystore",
+                "プロバイダーごとにAndroid Keystoreへ暗号化保存");
+        add("音色 / Agent ID", "Voice / Agent ID", "音声 / Agent ID");
+        add("可选；ElevenAgents 在此填写 Agent ID",
+                "Optional; enter the ElevenAgents Agent ID here",
+                "任意。ElevenAgentsのAgent IDをここに入力");
+        add("厂商参数 JSON", "Provider parameters (JSON)", "プロバイダーパラメーター（JSON）");
+        add("可选，例如房间号、工作空间或适配器参数",
+                "Optional, for example a room, workspace, or adapter parameters",
+                "任意。ルーム、ワークスペース、アダプターパラメーターなど");
+        add("此项使用澄语实时适配器协议。",
+                "This option uses the Chengyu realtime-adapter protocol. ",
+                "この項目は澄語リアルタイムアダプタープロトコルを使用します。");
+        add("此项由澄语原生直连。",
+                "Chengyu connects to this provider natively. ",
+                "この項目は澄語からネイティブ接続します。");
+        add(" 请勿把云厂商 SecretKey 写入厂商参数。",
+                " Do not put a cloud SecretKey in provider parameters.",
+                " クラウドのSecretKeyをプロバイダーパラメーターに入力しないでください。");
+        add("可填写百炼工作空间专属 WSS；Plus 支持原生联网搜索。",
+                "You can enter a Model Studio workspace WSS; Plus supports native web search. ",
+                "Model Studioワークスペース専用WSSを入力できます。PlusはネイティブWeb検索に対応します。");
+        add("火山 S2S 使用二进制事件协议和服务端鉴权，请填写实时适配器 WSS。",
+                "Volcengine S2S uses binary events and server-side authentication; enter a realtime-adapter WSS. ",
+                "Volcengine S2Sはバイナリイベントとサーバー側認証を使用します。リアルタイムアダプターWSSを入力してください。");
+        add("支持 GLM-Realtime Flash / Air，并默认启用服务端搜索。",
+                "Supports GLM-Realtime Flash / Air and enables server-side search by default. ",
+                "GLM-Realtime Flash / Airに対応し、サーバー側検索を既定で有効にします。");
+        add("near / far 分别适合近场与远场拾音。",
+                "near / far are intended for near-field and far-field capture. ",
+                "near / farはそれぞれ近距離・遠距離収音向けです。");
+        add("UserSig 与 StartAIConversation 必须由后端签发；请填写 TRTC 实时适配器 WSS。",
+                "UserSig and StartAIConversation must be issued by a backend; enter a TRTC realtime-adapter WSS. ",
+                "UserSigとStartAIConversationはバックエンドで発行する必要があります。TRTCリアルタイムアダプターWSSを入力してください。");
+        add("将语音识别、M2.7 对话与 Speech 2.8 合成为双向实时流。",
+                "Combines speech recognition, M2.7 conversation, and Speech 2.8 into a bidirectional realtime stream. ",
+                "音声認識、M2.7会話、Speech 2.8を双方向リアルタイムストリームに統合します。");
+        add("直接使用 OpenAI API Key，不再请求短期令牌服务。",
+                "Uses an OpenAI API key directly; no short-lived-token service is requested. ",
+                "OpenAI APIキーを直接使用し、短期トークンサービスには接続しません。");
+        add("使用 Gemini Live 原生双向 WebSocket。",
+                "Uses the native Gemini Live bidirectional WebSocket. ",
+                "Gemini Liveのネイティブ双方向WebSocketを使用します。");
+        add("使用 xAI Voice Agent API 的 Realtime 兼容事件。",
+                "Uses Realtime-compatible xAI Voice Agent API events. ",
+                "xAI Voice Agent APIのRealtime互換イベントを使用します。");
+        add("Bedrock 双向 EventStream 需要 SigV4；请填写 Nova 实时适配器 WSS。",
+                "Bedrock bidirectional EventStream requires SigV4; enter a Nova realtime-adapter WSS. ",
+                "Bedrock双方向EventStreamにはSigV4が必要です。NovaリアルタイムアダプターWSSを入力してください。");
+        add("公开 Agent 在“音色 / Agent ID”填写 ID；私有 Agent 将已签名 WSS 填入加密凭据栏。",
+                "For a public Agent, enter its ID under Voice / Agent ID. For a private Agent, put the signed WSS in the encrypted credential field. ",
+                "公開Agentは「音声 / Agent ID」にIDを入力します。非公開Agentは署名済みWSSを暗号化認証情報欄に入力します。");
+        add("由适配器串联 Voxtral Realtime、LLM 与 Voxtral TTS。",
+                "The adapter chains Voxtral Realtime, an LLM, and Voxtral TTS. ",
+                "アダプターがVoxtral Realtime、LLM、Voxtral TTSを連結します。");
         add("在 OpenAI 页面输入此验证码", "Enter this code on the OpenAI page", "OpenAIページでこのコードを入力");
         add("复制并打开 OpenAI", "Copy and open OpenAI", "コピーしてOpenAIを開く");
         add("正在获取验证码…", "Getting code…", "コードを取得中…");
@@ -289,16 +415,69 @@ public final class L10n {
         add("聊天直接发送到上方 API 地址，使用所选模型。",
                 "Chats are sent directly to the API URL above using the selected model.",
                 "チャットは選択したモデルで上のAPI URLへ直接送信されます。");
+        add("本地", "Local", "ローカル");
+        add("本地模型", "Local models", "ローカルモデル");
+        add("本地 · Qwen3.5-0.8B", "Local · Qwen3.5-0.8B", "ローカル · Qwen3.5-0.8B");
+        add("本地 · Qwen3.5-2B", "Local · Qwen3.5-2B", "ローカル · Qwen3.5-2B");
+        add("端侧运行", "On-device", "端末内実行");
+        add("模型下载后会在设备上生成聊天，不把完整提示词或历史消息发送给模型服务。启用联网搜索时，本轮查询会发送到公共搜索服务。下载支持断点续传，建议连接 Wi-Fi 并预留充足存储和内存。",
+                "After download, chats are generated on this device without sending the full prompt or history to a model service. When web search is enabled, the current query is sent to a public search service. Downloads can resume; use Wi-Fi and leave enough storage and memory.",
+                "ダウンロード後の生成は端末内で行われ、完全なプロンプトや履歴はモデルサービスへ送信されません。ウェブ検索が有効な場合、現在の検索語は公開検索サービスへ送信されます。ダウンロードは再開可能です。Wi-Fiを使い、十分なストレージとメモリを確保してください。");
+        add("速度更快，支持图片理解，建议至少 3 GB 可用内存",
+                "Faster, with image understanding; at least 3 GB of free memory recommended",
+                "高速で画像理解に対応。3 GB以上の空きメモリを推奨");
+        add("效果更好，支持图片理解，建议至少 5 GB 可用内存",
+                "Higher quality, with image understanding; at least 5 GB of free memory recommended",
+                "高品質で画像理解に対応。5 GB以上の空きメモリを推奨");
+        add("本地 Qwen 支持图片理解；模型包会同时下载对应视觉组件。联网搜索结果由应用注入，本地和 API 模式均可使用。首次回答会花较长时间载入模型。",
+                "Local Qwen supports image understanding and downloads its matching vision component. The app injects web results for both local and API modes. The first reply takes longer while the model loads.",
+                "ローカルQwenは画像理解に対応し、対応する視覚コンポーネントもダウンロードします。検索結果はアプリから渡され、ローカルとAPIの両方で利用できます。初回応答はモデル読み込みに時間がかかります。");
+        add("尚未下载", "Not downloaded", "未ダウンロード");
+        add("下载", "Download", "ダウンロード");
+        add("暂停", "Pause", "一時停止");
+        add("继续", "Resume", "再開");
+        add("使用", "Use", "使用");
+        add("使用中", "In use", "使用中");
+        add("正在校验模型完整性…", "Verifying model integrity…", "モデルの整合性を確認中…");
+        add("已下载 · 当前正在使用", "Downloaded · In use", "ダウンロード済み · 使用中");
+        add("已下载 · 可离线使用", "Downloaded · Available offline", "ダウンロード済み · オフラインで使用可能");
+        add("将删除已下载模型和未完成的下载；聊天记录不会受到影响。",
+                "This removes the downloaded model and any partial download. Chat history is unaffected.",
+                "ダウンロード済みモデルと未完了のデータを削除します。チャット履歴には影響しません。");
+        add("本地模型已删除", "Local model deleted", "ローカルモデルを削除しました");
+        add("部分模型文件无法删除，请稍后重试",
+                "Some model files could not be deleted. Try again later.",
+                "一部のモデルファイルを削除できませんでした。後でもう一度お試しください。");
+        add("本地模型需要 Android 9 或更高版本",
+                "Local models require Android 9 or later",
+                "ローカルモデルにはAndroid 9以降が必要です");
+        add("本地模型目前需要 64 位 ARM 设备",
+                "Local models currently require a 64-bit ARM device",
+                "ローカルモデルには現在64ビットARM端末が必要です");
+        add("未完成", "Not completed", "未完了");
+        add("存储空间不足，无法完成模型下载",
+                "Not enough storage to finish the model download",
+                "モデルのダウンロードを完了するための空き容量が不足しています");
+        add("模型校验失败，下载文件可能已损坏",
+                "Model verification failed; the download may be corrupted",
+                "モデルの検証に失敗しました。ダウンロードが破損している可能性があります");
+        add("本地推理组件缺失，请重新安装完整 APK",
+                "The local inference component is missing. Reinstall the complete APK.",
+                "ローカル推論コンポーネントがありません。完全なAPKを再インストールしてください。");
+        add("模型下载失败", "Model download failed", "モデルのダウンロードに失敗しました");
+        add("模型下载不完整", "Model download incomplete", "モデルのダウンロードが未完了です");
+        add("本地模型运行失败", "Local model failed", "ローカルモデルの実行に失敗しました");
         add("选择接口协议", "Choose API protocol", "APIプロトコルを選択");
         add("移除", "Remove", "削除");
-        add("移除 Claude 账户？", "Remove Claude account?", "Claudeアカウントを削除しますか？");
+        add("退出 GitHub Copilot？", "Sign out of GitHub Copilot?", "GitHub Copilotからログアウトしますか？");
         add("退出 GPT 账户？", "Sign out of GPT?", "GPTからログアウトしますか？");
-        add("只会删除本机加密保存的 Claude 凭据。", "Only the encrypted Claude credential on this device will be removed.", "端末に暗号化保存されたClaude認証情報のみ削除します。");
+        add("只会删除本机加密保存的 GitHub OAuth 令牌，不会影响 GitHub 或 Copilot 订阅。",
+                "Only the encrypted GitHub OAuth token on this device will be removed. Your GitHub account and Copilot subscription are unaffected.",
+                "端末に暗号化保存されたGitHub OAuthトークンのみ削除します。GitHubアカウントやCopilotサブスクリプションには影響しません。");
         add("只会删除本机保存的 OAuth 令牌，不会影响 OpenAI 账户。", "Only the OAuth token on this device will be removed. Your OpenAI account is unaffected.", "端末のOAuthトークンのみ削除します。OpenAIアカウントには影響しません。");
-        add("已删除本机 Claude 凭据", "Claude credential removed from this device", "端末のClaude認証情報を削除しました");
+        add("已删除本机 GitHub Copilot 登录", "GitHub Copilot sign-in removed from this device", "端末のGitHub Copilotログイン情報を削除しました");
         add("已删除本机 GPT 登录", "GPT sign-in removed from this device", "端末のGPTログイン情報を削除しました");
-        add("Claude 凭据已加密保存在本机", "Claude credential encrypted and saved on this device", "Claude認証情報を暗号化して端末に保存しました");
-        add("请输入 Claude API Key 或访问令牌", "Enter a Claude API key or access token", "Claude APIキーまたはアクセストークンを入力してください");
+        add("请先填写 GitHub OAuth Client ID", "Enter the GitHub OAuth Client ID first", "先にGitHub OAuthクライアントIDを入力してください");
 
         add("检测到同名角色", "Character name already exists", "同名のキャラクターがあります");
         add("覆盖原角色", "Replace existing", "既存を上書き");
@@ -560,6 +739,68 @@ public final class L10n {
             return japanese
                     ? "取得失敗 · キャッシュ済みモデル" + matcher.group(1) + "件を保持"
                     : "Failed to load · Kept " + matcher.group(1) + " cached models";
+        }
+        matcher = PROVIDER_MODELS.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? "プロバイダーから" + matcher.group(1) + "件のモデルを取得"
+                    : "Loaded " + matcher.group(1) + " models from provider";
+        }
+        matcher = PROVIDER_CACHED_MODELS.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? "プロバイダー一覧を取得できません · キャッシュ済みモデル"
+                    + matcher.group(1) + "件を保持"
+                    : "Provider list unavailable · Kept "
+                    + matcher.group(1) + " cached models";
+        }
+        matcher = LOCAL_DOWNLOAD_PROGRESS.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? "ダウンロード中 " + matcher.group(1) + "% · "
+                    + matcher.group(2) + " / " + matcher.group(3)
+                    : "Downloading " + matcher.group(1) + "% · "
+                    + matcher.group(2) + " / " + matcher.group(3);
+        }
+        matcher = LOCAL_PAUSED_PROGRESS.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? "一時停止 · " + matcher.group(1) + " / " + matcher.group(2)
+                    : "Paused · " + matcher.group(1) + " / " + matcher.group(2);
+        }
+        matcher = LOCAL_SELECTED.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? matcher.group(1) + "のローカル生成に切り替えました"
+                    : "Switched to local generation with " + matcher.group(1);
+        }
+        matcher = LOCAL_DELETE.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? matcher.group(1) + "を削除しますか？"
+                    : "Delete " + matcher.group(1) + "?";
+        }
+        matcher = LOCAL_CHAT_ROUTE.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? "チャットは端末内の" + matcher.group(1)
+                    + "で生成され、メッセージは送信されません。"
+                    : "Chats are generated on this device with "
+                    + matcher.group(1) + "; messages are not uploaded.";
+        }
+        matcher = LOCAL_DOWNLOAD_FIRST.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? "先に" + matcher.group(1) + "をダウンロードし、「使用」をタップしてください。"
+                    : "Download " + matcher.group(1) + " first, then tap Use.";
+        }
+        matcher = LOCAL_ENABLE_FIRST.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? "「接続とアカウント → ローカルモデル」で"
+                    + matcher.group(1) + "をダウンロードして有効にしてください"
+                    : "Download and enable " + matcher.group(1)
+                    + " in Connections & accounts → Local models first";
         }
         return null;
     }

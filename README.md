@@ -17,10 +17,11 @@
 - 接口协议使用单一选择框，默认“GPT 兼容接口”，切换 Claude / Gemini 时会同步设置适合的官方根地址与模型，并自动刷新模型列表
 - 兼容 Azure OpenAI `api-key` 请求头，以及 SSE、普通 JSON、JSONL 等常见返回方式
 - 默认过滤 DeepSeek、Kimi、GLM 等模型的内部推理字段；可在设置中主动开启“显示模型思考过程”
-- 角色联网搜索默认开启（可在设置关闭）：Responses 使用 `web_search`，Chat 搜索模型使用 `web_search_options`，搜索来源会附在回复末尾并可点击
+- 角色联网搜索默认开启（可在设置关闭）：优先使用模型/厂商原生搜索（Responses `web_search`、Claude Web Search、Gemini Google Search、Qwen `enable_search`、OpenRouter Server Tool 等）；厂商明确不支持时才由应用检索并注入带来源结果
 - 兼容 Hermes 的 ChatGPT/Codex 设备授权与 Responses SSE 流式生成
-- “账户”统一承载 GPT 与 Claude：GPT 使用设备授权，Claude 使用本机加密保存的 API Key / Bearer 访问令牌
-- 直连 API / 账户两种聊天生成路由；自动获取直连接口和当前账户的可用模型，支持输入筛选与离线缓存回退
+- “账户”统一承载 GPT 与 GitHub Copilot：GPT 使用 OpenAI 设备授权，Copilot 使用 GitHub OAuth Device Flow 和官方 Copilot SDK 网关
+- 直连 API / 账户 / 本地模型三种聊天生成路由；自动获取直连接口和当前账户的可用模型，支持输入筛选与离线缓存回退
+- API 设置内可断点下载、校验并直接启用 Qwen3.5-0.8B 与 Qwen3.5-2B；本地提示词和聊天内容不离开设备
 - 消息页右上角统一提供“创建群聊 / 添加角色”；角色页负责浏览与管理
 - 本地角色可以直接自由组合群聊，不需要同步外部服务器
 - 微信式群聊消息：每位角色显示独立头像和发言名；每轮随机回复顺序，并由角色按话题关联性决定是否发言
@@ -47,8 +48,8 @@
 - 群聊成员会基于同一份最新消息同时开始判断和生成；“群聊主动发言”默认开启，空闲时角色会不定期自行发起话题
 - 界面跟随系统语言，当前提供简体中文、English 与日本語
 - 本地会话持久化
-- GPT OAuth 令牌、Claude 凭据和直连 API Key 使用 Android Keystore + AES-GCM 加密
-- Realtime 令牌服务 Bearer 使用 Android Keystore + AES-GCM 加密
+- GPT OAuth 令牌、GitHub OAuth 令牌和直连 API Key 使用 Android Keystore + AES-GCM 加密
+- 各厂商 Realtime API Key / 会话凭据分别使用 Android Keystore + AES-GCM 加密
 - 单一应用内置向导“豆乃GPT”，设定和头像随 APK 提供，资料页与角色列表明确标记“应用内置”，并指导连接、模型、角色卡、群聊和语音功能
 - 升级时只移除旧版三个演示角色，保留用户导入的角色和既有本地群聊
 - 完整跟随系统深色模式：页面、卡片、聊天背景、气泡、输入区、弹窗与系统栏使用分层暗色表面，同时保持微信式绿色操作反馈
@@ -61,7 +62,8 @@
 
    - **直连 API**：聊天请求直接发往上一步配置的 GPT 兼容、Claude 或 Gemini 接口。
    - **账户 → GPT**：点击“登录 GPT 账户”，复制设备验证码并在自动打开的 `auth.openai.com` 页面完成登录；授权成功后会自动获取该账户可见的 Codex 模型。
-   - **账户 → Claude**：粘贴 Claude API Key 或 Bearer 访问令牌并保存；应用会加密保存凭据并自动获取 Claude 模型。该入口不伪造第三方消费者 OAuth 登录。
+   - **账户 → GitHub Copilot**：填写启用 Device Flow 的 GitHub OAuth App Client ID 和已部署的 Copilot SDK 网关，随后在 GitHub 官方页面确认设备验证码。登录后会通过网关自动读取当前 Copilot 账户可用模型。
+   - **本地**：在同页“本地模型”卡片下载 Qwen3.5-0.8B 或 Qwen3.5-2B，校验完成后点“使用”。本地运行要求 Android 9+ 的 64 位 ARM 设备。
 
 4. 在“消息”页点右上角 `+`，选择“添加角色”导入 JSON/PNG 角色卡。
 5. 本地至少有两位角色后，在同一菜单选择“创建群聊”，勾选成员即可使用。
@@ -77,26 +79,35 @@
 - 该模式使用 ChatGPT Codex 后端，不是通用 OpenAI API 密钥直连。账户计划、模型权限、使用额度和服务可用性由 OpenAI 决定。
 - 应用会为 Codex 请求补齐账户 ID、`originator` 等兼容头，并在 403 时使用浏览器标识重试；对疑似污染的 `chatgpt.com` DNS 会优先尝试 HTTPS DNS。若 OpenAI 登录网页本身仍显示 Cloudflare 403，需切换可访问的网络或代理，客户端无法代替浏览器完成 JavaScript 安全验证。
 - 这是实验性兼容功能，不是 OpenAI 为任意第三方 Android 客户端承诺的稳定接口；上游授权或后端协议变化时可能需要更新应用。
-- Claude：使用官方 API Key 或 Bearer 访问令牌连接 Claude API；凭据只保存在本应用的 Keystore 密文中。Anthropic 没有为任意第三方 Android 消费者提供可直接复用的账号密码登录流程，因此这里不会要求 Claude 密码，也不会模拟网页登录。
+- GitHub Copilot：应用只实现 GitHub 官方 OAuth Device Flow，不要求 GitHub 密码。安卓无法直接运行 Copilot CLI，因此模型目录和聊天经 [`copilot-gateway`](copilot-gateway/README.md) 调用 GitHub 官方 Copilot SDK；每位用户使用自己的 OAuth 令牌和 Copilot 订阅。Client Secret 不会放入 APK。
 
 ## Realtime 语音通话
 
-语音通话使用 `gpt-realtime-2.1`。ChatGPT/Codex 登录令牌不能代替 OpenAI API 的 Realtime 凭据；应用也不会把长期 OpenAI API Key 存在 APK 或手机普通设置中。需要由你控制的服务使用标准 API Key 申请短期 client secret，手机只获取短期令牌。
+旧版 OpenAI 短期令牌服务已移除。“我的 → 连接与账户 → Realtime 语音”现在按厂商分别保存配置和 Keystore 加密凭据，支持以下两种接入：
 
-项目根目录包含一个仅依赖 Node.js 18+ 的示例：
+- 原生直连：Qwen3.5 Omni Realtime、GLM-Realtime、百度 Realtime、OpenAI Realtime、Gemini Live、xAI Voice Agent、ElevenLabs ElevenAgents。
+- 实时适配器：豆包/火山 S2S-O 与 S2S-SC、TRTC AI 实时对话、MiniMax Speech 2.8 + M2.7、Amazon Nova 2 Sonic、Mistral Voxtral Realtime + LLM + Voxtral TTS。
 
-```powershell
-$env:OPENAI_API_KEY = "你的 OpenAI API Key"
-$env:MIUTAVERN_TOKEN = "自定义一个访问口令"
-node .\realtime-token-server.example.mjs
+进入设置或切换语音厂商后，应用会自动读取厂商当前模型目录；OpenAI、Gemini、xAI、Mistral、Qwen 和智谱使用各自模型 API，云签名型服务从已配置实时适配器的 `/models` 读取。厂商目录不可用时保留上次缓存或内置兼容列表，仍允许手动填写模型 ID。
+
+原生直连凭据不会写入 APK 或普通设置，但它仍存在终端设备上；只应在自己的设备使用可撤销、限额的 Key。TRTC UserSig、Bedrock SigV4、火山 SecretKey 等必须留在后端，因此应用不会要求这些云端 SecretKey，而是连接你填写的实时适配器 WSS。
+
+实时适配器接收的首个文本帧为：
+
+```json
+{
+  "type": "session.start",
+  "provider": "trtc",
+  "model": "trtc-ai-conversation",
+  "voice": "",
+  "instructions": "角色与最近聊天提示词",
+  "input_audio": {"format": "pcm_s16le", "sample_rate": 16000, "channels": 1},
+  "output_audio": {"format": "pcm_s16le", "sample_rate": 24000, "channels": 1},
+  "metadata": {}
+}
 ```
 
-然后在“我的 → 连接与账户 → Realtime 语音”填写：
-
-- 短期令牌服务：`http://电脑局域网地址:8787/token`
-- 令牌服务 Bearer：与 `MIUTAVERN_TOKEN` 相同
-
-公网部署必须使用 HTTPS。局域网 HTTP 只适合可信网络；API 项目还需要具备 Realtime 模型权限和可用额度。本版本使用短期令牌连接 WebSocket 并由客户端处理 PCM 音频，通话页离开或挂断后会立即释放麦克风与连接。
+随后应用发送 `input_audio.append`（Base64 PCM）；适配器返回 `audio.delta`、`transcript.delta`、`transcript.done`、`state`、`response.done` 或 `error`。适配器也可直接返回二进制 PCM 音频帧。公网必须使用 WSS；通话页离开或挂断后会立即释放麦克风和连接。
 
 ## 直连 API 兼容基线
 
@@ -110,6 +121,90 @@ GPT 兼容直连服务至少需要提供一种生成路由：
 Claude 原生协议使用 `POST /v1/messages` 和 `GET /v1/models`；Gemini 原生协议使用 `POST /v1beta/models/{model}:streamGenerateContent?alt=sse` 和 `GET /v1beta/models`。两者均支持文字与相册/拍照的多模态输入，并在“联网搜索”开启时分别声明 Claude web search 与 Gemini Google Search 工具。
 
 端点兼容策略参考了 [CC Switch](https://github.com/farion1231/cc-switch) 的模型端点候选、完整 URL 和 Chat/Responses 协议区分方式，但本应用直接在客户端适配，不依赖本地桌面代理。
+
+## Qwen3.5 本地模型
+
+“我的 → 连接与账户 → 本地模型”提供两个经过固定提交和 SHA-256 校验的 GGUF 下载项：
+
+- `Qwen3.5-0.8B Q4_0`：主模型 563,036,064 字节；同时下载 204,987,232 字节的 `mmproj-F16.gguf` 视觉组件，支持本地图片理解，适合优先考虑速度和内存占用的设备。
+- `Qwen3.5-2B Q4_K_M`：主模型 1,280,835,840 字节；同时下载 668,227,264 字节的 `mmproj-F16.gguf` 视觉组件，质量更高但需要更多内存。
+
+下载写入应用专属外部存储，支持保留 `.part` 文件后继续下载；完成后先核对预期文件大小，再计算完整 SHA-256，校验通过才显示“使用”。卸载应用时模型会随应用专属数据删除。模型下载地址固定到具体 Hugging Face 提交，避免上游同名文件静默替换。
+
+端侧推理由 [llama.cpp](https://github.com/ggml-org/llama.cpp) `b10202` 的 Android arm64 Vulkan 构建提供：默认优先将模型层卸载到 GPU，仅在 GPU 启动失败且尚未生成内容时回退通用 ARM CPU。运行文件和 MIT 许可证说明位于 `third_party/llama.cpp`。应用仍保持 `minSdk 26` 和版本 `0.9.0 (9)`；只有本地模型入口要求 Android 9（API 28）或更高版本及 arm64，直连 API 与账户模式继续兼容原系统范围。
+
+本地接入使用 4096 token 上下文和单进程内存保护，最新一张图片会经匹配的视觉组件在设备端编码。联网搜索开启后，网络 API 先调用模型或厂商的原生搜索；只有服务端明确拒绝搜索工具且尚未输出正文时，才把应用检索的带来源摘要注入提示词重试。本地模型没有厂商搜索能力，直接使用应用检索；应用兜底只发送当前查询给公共搜索服务，不上传本地聊天历史。群聊的多个本地回复会排队推理，避免同时加载多个模型进程导致系统因内存不足终止应用。首次回答需要载入 GGUF，耗时会明显长于后续网络请求。
+
+## 区块链积分
+
+0.9.0 提供一套可选的链上积分 MVP：
+
+- `points-server/contracts/ChengyuPoints.sol` 是不可转让积分合约。它没有 ERC-20 的转账、授权和交易接口，只允许已授权发行方发放或核销积分。
+- 每笔业务使用唯一 `reference`，重复请求会在合约层拒绝，避免网络重试造成重复发放。
+- Android APK 不保存发行方私钥。应用只保存由积分服务签发的匿名访问令牌；积分服务验证签到规则、代付 Gas，再把结果写入链上。
+- 当前任务为每日签到，每天领取一次，默认 10 积分。合约已经保留 `spend` 核销能力，可继续接入主题、角色槽位或模型额度兑换。
+- 链上只出现匿名地址、余额与流水标识，不包含聊天、角色卡、API Key 或第三方账户凭据。链上记录公开且通常无法删除。
+- 当前匿名积分令牌只加密保存在本机且不进入 Android 备份；卸载应用后暂时无法恢复原积分账户。正式上线前应增加经过验证的用户账号或钱包绑定与恢复流程。
+
+默认开发网络为 Base Sepolia（chain ID `84532`）。测试公共 RPC 是限流资源；生产环境应替换成自己的节点服务，并先完成合约审计和业务合规评估。
+
+### 1. 安装与测试合约
+
+需要 Node.js 22.13 或更高版本：
+
+```powershell
+Set-Location .\points-server
+npm.cmd install
+npm.cmd test
+```
+
+### 2. 部署合约
+
+部署者应是离线管理的合约所有者；在线服务使用单独的发行方地址：
+
+```powershell
+$env:RPC_URL = "https://sepolia.base.org"
+$env:EXPECTED_CHAIN_ID = "84532"
+$env:DEPLOYER_PRIVATE_KEY = "0x部署钱包私钥"
+$env:ISSUER_ADDRESS = "0x在线发行方地址"
+npm.cmd run build
+npm.cmd run deploy
+```
+
+部署脚本会再次核对 chain ID，避免把测试配置误发到其他网络。部署后记录合约地址，并给部署钱包和发行方钱包准备少量测试网 ETH。私钥不得提交到 Git。
+
+### 3. 启动积分服务
+
+```powershell
+$env:RPC_URL = "你的 Base Sepolia RPC"
+$env:EXPECTED_CHAIN_ID = "84532"
+$env:EXPLORER_URL = "https://sepolia-explorer.base.org"
+$env:CONTRACT_ADDRESS = "0x已部署合约"
+$env:ISSUER_PRIVATE_KEY = "0x在线发行方私钥"
+$env:POINTS_HMAC_SECRET = "至少32位的高强度随机值"
+$env:DATA_FILE = ".\data\points.json"
+$env:DAILY_CHECKIN_POINTS = "10"
+npm.cmd start
+```
+
+服务启动时会确认网络、合约代码和发行方权限。`GET /health` 用于健康检查。`points-server/data` 保存匿名账户令牌哈希和签到状态，需要持久化备份；MVP 的 JSON 存储适合单实例，正式上线前应替换成带唯一约束和事务的数据库，并在可信反向代理处配置限流。
+
+### 4. 把服务地址写入 APK
+
+公网必须使用 HTTPS：
+
+```powershell
+.\gradlew.bat :app:assembleDebug -PPOINTS_SERVER_URL="https://points.example.com"
+```
+
+未传入 `POINTS_SERVER_URL` 时应用仍可正常聊天，但“我的 → 链上积分”会明确显示服务尚未配置，不会伪造本地余额。
+
+## CC 币
+
+`points-server` 还包含独立的可转账 CC 币和防机器人周度掉落控制器。它与不可转让
+应用积分分开：积分负责应用权益，CC 币负责公开链上资产。发行曲线、风控评分、
+Merkle 领取和 Base Sepolia 部署步骤见
+[`points-server/CC_TOKEN.md`](points-server/CC_TOKEN.md)。
 
 ## 构建
 
@@ -137,13 +232,13 @@ app\build\outputs\apk\debug\app-debug.apk
 ## 数据与隐私
 
 - 角色卡、聊天和普通设置保存在应用私有存储。
-- GPT OAuth 令牌、Claude 凭据和直连 API Key 不进入普通设置 JSON，也不会以明文回退保存。
-- Realtime 令牌服务 Bearer 不进入普通设置 JSON；短期 OpenAI token 只保留在内存中。
+- GPT OAuth 令牌、GitHub OAuth 令牌和直连 API Key 不进入普通设置 JSON，也不会以明文回退保存。GitHub OAuth Client ID 和 Copilot SDK 网关地址属于公开配置，会保存在普通设置中。
+- 各厂商 Realtime API Key / 会话凭据不进入普通设置 JSON，按厂商分别加密保存在 Android Keystore。
 - 更换后的角色头像和用户头像复制到应用私有目录，不持续依赖相册读取权限。
 - 聊天图片也会复制并压缩到应用私有目录；只有在发送消息时才交给当前配置的模型服务。
 - 位置权限仅用于用户主动点击“位置”后取得经纬度并发送；应用不在后台持续定位。
 - Android 备份被关闭，避免会话和密文随系统备份迁移。
-- 应用不包含统计、广告或自建账号系统。
+- 应用不包含统计或广告。启用链上积分后会创建独立的匿名积分账户，它不与 GPT、GitHub Copilot 或直连 API 凭据绑定。
 
 ## 项目状态
 

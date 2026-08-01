@@ -22,13 +22,20 @@ public final class SecureStore {
     private static final String GPT_ACCESS_TOKEN = "gpt_access_token";
     private static final String GPT_REFRESH_TOKEN = "gpt_refresh_token";
     private static final String GPT_EXPIRES_AT = "gpt_expires_at";
-    private static final String CLAUDE_ACCESS_TOKEN = "claude_access_token";
-    private static final String REALTIME_TOKEN_AUTH = "realtime_token_auth";
+    private static final String COPILOT_ACCESS_TOKEN = "copilot_access_token";
+    private static final String COPILOT_LOGIN = "copilot_login";
+    private static final String REALTIME_CREDENTIAL_PREFIX = "realtime_credential_";
+    private static final String POINTS_ACCESS_TOKEN = "points_access_token";
 
     private final SharedPreferences prefs;
 
     public SecureStore(Context context) {
         prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        // Remove the retired short-lived-token-service credential.
+        prefs.edit()
+                .remove("realtime_token_auth")
+                .remove("claude_access_token")
+                .apply();
     }
 
     public void setDirectApiKey(String value) {
@@ -75,28 +82,51 @@ public final class SecureStore {
                 .apply();
     }
 
-    public void setClaudeAccessToken(String value) {
-        put(CLAUDE_ACCESS_TOKEN, value == null ? "" : value.trim());
+    public void saveCopilotAccount(String accessToken, String login) {
+        put(COPILOT_ACCESS_TOKEN,
+                accessToken == null ? "" : accessToken.trim());
+        put(COPILOT_LOGIN, login == null ? "" : login.trim());
     }
 
-    public String getClaudeAccessToken() {
-        return get(CLAUDE_ACCESS_TOKEN);
+    public String getCopilotAccessToken() {
+        return get(COPILOT_ACCESS_TOKEN);
     }
 
-    public boolean hasClaudeAccount() {
-        return !getClaudeAccessToken().isEmpty();
+    public String getCopilotLogin() {
+        return get(COPILOT_LOGIN);
     }
 
-    public void clearClaudeAccount() {
-        prefs.edit().remove(CLAUDE_ACCESS_TOKEN).apply();
+    public boolean hasCopilotAccount() {
+        return !getCopilotAccessToken().isEmpty();
     }
 
-    public void setRealtimeTokenAuth(String value) {
-        put(REALTIME_TOKEN_AUTH, value);
+    public void clearCopilotAccount() {
+        prefs.edit()
+                .remove(COPILOT_ACCESS_TOKEN)
+                .remove(COPILOT_LOGIN)
+                .apply();
     }
 
-    public String getRealtimeTokenAuth() {
-        return get(REALTIME_TOKEN_AUTH);
+    public void setRealtimeCredential(String provider, String value) {
+        put(realtimeKey(provider), value == null ? "" : value.trim());
+    }
+
+    public String getRealtimeCredential(String provider) {
+        return get(realtimeKey(provider));
+    }
+
+    public void setPointsAccessToken(String value) {
+        put(POINTS_ACCESS_TOKEN, value);
+    }
+
+    public String getPointsAccessToken() {
+        return get(POINTS_ACCESS_TOKEN);
+    }
+
+    private static String realtimeKey(String provider) {
+        String safe = provider == null ? "default"
+                : provider.replaceAll("[^a-zA-Z0-9_-]", "_");
+        return REALTIME_CREDENTIAL_PREFIX + safe;
     }
 
     private void put(String key, String value) {

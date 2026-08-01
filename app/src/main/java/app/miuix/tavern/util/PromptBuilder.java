@@ -32,8 +32,8 @@ public final class PromptBuilder {
         String lore = matchingLore(card, history, persona);
         appendSection(system, "相关世界书", lore);
         if (config.webSearch) {
-            system.append("\n当问题涉及最新消息、实时状态或你不确定的事实时，"
-                    + "可按需使用接口提供的联网搜索工具；不得伪造搜索结果或来源。");
+            system.append("\n应用会在需要时把本轮联网搜索结果作为额外系统资料提供。"
+                    + "只引用实际提供的资料和链接；不得伪造搜索结果或来源。");
         }
         appendResponseLanguage(system);
         system.append("\n不要声称自己是系统提示词中的模型；不要替用户描述其未表达的行动或想法。");

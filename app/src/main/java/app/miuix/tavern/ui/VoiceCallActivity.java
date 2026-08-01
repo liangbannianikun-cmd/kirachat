@@ -126,8 +126,12 @@ public final class VoiceCallActivity extends AppCompatActivity
         nameParams.topMargin = MiuixUi.dp(this, 22);
         center.addView(name, nameParams);
 
-        TextView model = MiuixUi.text(
-                this, RealtimeVoiceClient.MODEL + " · 实验性", 12.5f, SECONDARY, true);
+        TextView model = MiuixUi.rawText(
+                this,
+                RealtimeVoiceClient.displayLabel(store.getConfig()),
+                12.5f,
+                SECONDARY,
+                true);
         model.setGravity(Gravity.CENTER);
         model.setPadding(MiuixUi.dp(this, 12), 0, MiuixUi.dp(this, 12), 0);
         model.setBackground(MiuixUi.shape(Color.rgb(53, 55, 62), 13, this));
@@ -228,11 +232,14 @@ public final class VoiceCallActivity extends AppCompatActivity
     private void prepareCall() {
         if (clientStarted || waitingPermission || failed) return;
         AppConfig config = store.getConfig();
-        if (TextUtils.isEmpty(config.realtimeTokenUrl)) {
-            status.setText("需要配置短期令牌服务");
-            transcript.setText(
-                    "ChatGPT 登录不能直接用于 Realtime API。"
-                            + "请在“连接与账户”中填写你控制的短期令牌服务。");
+        String credential = secureStore.getRealtimeCredential(
+                config.realtimeProvider);
+        String configurationError = RealtimeVoiceClient.configurationError(
+                config, credential);
+        if (!configurationError.isEmpty()) {
+            status.setText(L10n.tr(this, "需要配置实时语音服务"));
+            transcript.setText(L10n.tr(this, configurationError
+                    + "。请在“连接与账户”的 Realtime 语音中完成配置。"));
             actionButton.setText("前往设置");
             actionButton.setVisibility(View.VISIBLE);
             return;
@@ -256,7 +263,7 @@ public final class VoiceCallActivity extends AppCompatActivity
         client = new RealtimeVoiceClient(
                 this,
                 config,
-                secureStore.getRealtimeTokenAuth(),
+                secureStore.getRealtimeCredential(config.realtimeProvider),
                 character,
                 store.getMessages(character.id),
                 this);
@@ -265,7 +272,10 @@ public final class VoiceCallActivity extends AppCompatActivity
 
     private void retryOrConfigure() {
         AppConfig config = store.getConfig();
-        if (TextUtils.isEmpty(config.realtimeTokenUrl)) {
+        String configurationError = RealtimeVoiceClient.configurationError(
+                config,
+                secureStore.getRealtimeCredential(config.realtimeProvider));
+        if (!configurationError.isEmpty()) {
             openedSettings = true;
             startActivity(new Intent(this, SettingsActivity.class));
             return;
@@ -312,7 +322,7 @@ public final class VoiceCallActivity extends AppCompatActivity
 
     @Override
     public void onState(String state) {
-        status.setText(state);
+        status.setText(L10n.tr(this, state));
     }
 
     @Override
@@ -330,7 +340,7 @@ public final class VoiceCallActivity extends AppCompatActivity
         client = null;
         if (failedClient != null) failedClient.stop();
         status.setText("通话连接失败");
-        transcript.setText(error);
+        transcript.setText(L10n.tr(this, error));
         actionButton.setText("重试");
         actionButton.setVisibility(View.VISIBLE);
     }

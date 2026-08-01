@@ -404,7 +404,10 @@ public final class MainActivity extends AppCompatActivity {
 
         LinearLayout settings = MiuixUi.card(this);
         settings.setPadding(0, 0, 0, 0);
-        settings.addView(settingsRow("连接与账户", "直连 API、GPT / Claude 账户、人格", v ->
+        settings.addView(settingsRow("链上积分", "每日签到 · Base 链上可验证", v ->
+                startActivity(new Intent(this, PointsActivity.class))));
+        settings.addView(MiuixUi.divider(this, 18));
+        settings.addView(settingsRow("连接与账户", "直连 API、GPT / GitHub Copilot 账户、人格", v ->
                 startActivity(new Intent(this, SettingsActivity.class))));
         settings.addView(MiuixUi.divider(this, 18));
         settings.addView(settingsRow("隐私与存储", "密钥由 Android Keystore 加密", null));

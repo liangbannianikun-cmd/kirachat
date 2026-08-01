@@ -399,6 +399,7 @@ public final class GroupChatActivity extends AppCompatActivity
                     snapshot,
                     spontaneous);
             state.call = ApiClient.generate(
+                    this,
                     store.getConfig(),
                     secureStore,
                     secureStore.getDirectApiKey(),

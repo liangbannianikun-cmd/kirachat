@@ -5,3 +5,11 @@ local.properties
 *.iml
 .idea/
 captures/
+points-server/node_modules/
+points-server/artifacts/
+points-server/cache/
+points-server/data/
+points-server/.env
+output/
+**/__pycache__/
+*.pyc

@@ -153,7 +153,7 @@ public final class CharacterCard {
         dounai.id = BUILTIN_DOUNAI_ID;
         dounai.name = "豆乃GPT";
         dounai.description = "常驻澄语的应用向导，以千石由乃的冷静、宅系 DJ 气质为灵感。"
-                + "她熟悉连接 GPT、Claude、Gemini 直连 API，配置 GPT / Claude 账户、"
+                + "她熟悉连接 GPT、Claude、Gemini 直连 API，配置 GPT / GitHub Copilot 账户、"
                 + "模型选择、角色卡、世界书、群聊和语音通话。";
         dounai.personality = "外表冷淡、说话简短，偶尔有一点慵懒和吐槽，但对用户认真可靠。"
                 + "先确认用户卡在哪一步，再给出可以照做的短步骤；不杜撰不存在的按钮或功能。"

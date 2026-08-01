@@ -1,0 +1,29 @@
+{
+  "epoch": 0,
+  "pool": "1000000000000000000000",
+  "policy": {
+    "minimumEligibleAccounts": 100,
+    "accountCapPpm": 10,
+    "clusterCapBps": 300
+  },
+  "accounts": [
+    {
+      "account": "0x00000000000000000000000000000000000000A1",
+      "walletSignatureVerified": true,
+      "accountAgeDays": 30,
+      "walletBoundDays": 14,
+      "activeDays": 4,
+      "meaningfulSessions": 5,
+      "acceptedContributions": 1,
+      "helpfulReports": 0,
+      "streakWeeks": 3,
+      "riskScore": 8,
+      "deviceAccountCount": 1,
+      "recentDeviceActivity": "normal",
+      "deviceIntegrity": "strong",
+      "manualIdentityVerified": false,
+      "clusterId": "device:example-a",
+      "banned": false
+    }
+  ]
+}

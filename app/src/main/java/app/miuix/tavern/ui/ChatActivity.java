@@ -328,7 +328,8 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
 
         JSONArray prompt = PromptBuilder.build(character, config,
                 new ArrayList<>(messages));
-        activeCall = ApiClient.generate(config, secureStore, secureStore.getDirectApiKey(),
+        activeCall = ApiClient.generate(this, config, secureStore,
+                secureStore.getDirectApiKey(),
                 prompt, new ApiClient.StreamCallback() {
                     @Override
                     public void onDelta(String delta) {

@@ -52,18 +52,18 @@ MIUIX Compose 当前主线依赖 Kotlin 2.4 / Compose Multiplatform 1.11，和�
 - 消息列表或角色资料进入聊天时，聊天页从右侧进入，原页面轻微向左后退；返回沿同一路径反向退出，建立明确的空间关系。系统关闭动画时只保留 100–120ms 淡入淡出。
 - Dock 切换页面使用 18dp 方向提示和无回弹弹簧，快速再次切换会直接从当前显示状态重定向。
 - 切到后台不会主动中止生成，避免移动端失焦导致推理被取消。
-- GPT 登录拆成“获取验证码 → 用户主动打开浏览器 → 等待授权”三个可中断状态；Claude 凭据保存仍是即时、可撤销的本机操作。返回键始终可用，取消会立即断开轮询。
+- GPT 与 GitHub Copilot 登录都拆成“获取验证码 → 用户主动打开浏览器 → 等待授权”三个可中断状态。返回键始终可用，取消会立即断开轮询。
 - 登录成功、连接成功等状态就地显示并配合文字说明，不用阻塞式进度对话框遮住页面。
 
 ## 连接层级
 
 - 直连 API 是唯一可编辑的服务器连接，可选择 GPT 兼容、Responses、Claude Messages、Gemini GenerateContent、Azure OpenAI 或 Ollama 协议。
-- “账户”属于生成身份而不是第二个 API 地址：GPT 使用 OpenAI 设备授权；Claude 使用 Keystore 加密保存的 API Key / Bearer，不提供账号密码输入框。
+- “账户”属于生成身份：GPT 使用 OpenAI 设备授权；GitHub Copilot 使用 GitHub OAuth Device Flow，用户令牌由 Keystore 加密，模型请求经用户配置的官方 Copilot SDK 网关完成。
 - 群聊、角色卡与世界书均为本地数据，不随生成路由变化。
 - 模型字段是可编辑的自动完成控件：页面打开、协议切换、直连测试成功或账户配置成功时自动刷新，失败时保留按协议/账户隔离的上次成功缓存，不阻塞手动输入。
-- Realtime 语音是独立能力：手机向用户控制的令牌服务获取短期 client secret，再连接 `gpt-realtime-2.1`；长期 OpenAI API Key 只存在服务端。
-- 语音页负责麦克风权限、24 kHz PCM 采集/播放、语义 VAD、插话清空、静音、扬声器与挂断。页面销毁时释放音频设备和网络连接。
-- 当前 Android 8–10 原生基线先使用短期令牌 WebSocket 验证端到端能力；面向生产和复杂网络环境时，传输层应升级为 WebRTC。
+- Realtime 语音是独立能力：设置页按厂商选择模型、端点、音色和加密凭据，不再依赖 OpenAI 短期令牌服务。
+- Qwen、GLM、百度、OpenAI、Gemini、xAI 和 ElevenAgents 使用原生双向协议；TRTC、Nova、火山及组合式 ASR/LLM/TTS 通过统一实时适配器接入，云端签名密钥不进入客户端。
+- 语音页根据协议使用 16 kHz 或 24 kHz PCM 采集，并按服务输出采样率播放；负责 VAD 状态、插话清空、静音、扬声器与挂断。页面销毁时释放音频设备和网络连接。
 
 ## 无障碍
 
