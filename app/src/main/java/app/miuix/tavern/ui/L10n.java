@@ -39,6 +39,8 @@ public final class L10n {
             Pattern.compile("^开始与(.+)聊天$");
     private static final Pattern CALL_WITH =
             Pattern.compile("^与(.+)进行语音通话$");
+    private static final Pattern BACKUP_SUMMARY =
+            Pattern.compile("^(\\d+) 位角色 · (\\d+) 个群聊 · (\\d+) 条消息$");
     private static final Pattern CLEAR_SINGLE =
             Pattern.compile("^清空与 (.+) 的聊天？$");
     private static final Pattern CLEAR_NAMED =
@@ -536,6 +538,42 @@ public final class L10n {
                 "グループを作成しました。メッセージを送信してチャットを始めましょう。");
         add("本地群聊", "Local group", "ローカルグループ");
         add("更换我的头像", "Change my avatar", "自分のアバターを変更");
+        add("备份与还原", "Backup & restore", "バックアップと復元");
+        add("角色、聊天、图片与普通设置", "Characters, chats, images, and settings", "キャラクター、チャット、画像、通常設定");
+        add("把角色、群聊、聊天记录、世界书、头像、聊天背景和普通设置保存为一个 JSON 文件。",
+                "Save characters, groups, chat history, lorebooks, avatars, chat backgrounds, and regular settings to one JSON file.",
+                "キャラクター、グループ、チャット履歴、世界書、アバター、チャット背景、通常設定を1つのJSONファイルに保存します。");
+        add("创建备份", "Create backup", "バックアップを作成");
+        add("选择保存位置后生成备份文件。API Key、GPT/Copilot 登录令牌和语音服务凭据不会写入文件。",
+                "Choose a location to create the backup. API keys, GPT/Copilot tokens, and voice credentials are excluded.",
+                "保存先を選んでバックアップを作成します。APIキー、GPT/Copilotトークン、音声サービス認証情報は含まれません。");
+        add("导出备份", "Export backup", "バックアップを書き出す");
+        add("还原备份", "Restore backup", "バックアップを復元");
+        add("还原会替换本机现有角色、群聊、聊天记录和普通设置。选择文件后会再次确认。",
+                "Restoring replaces local characters, groups, chat history, and regular settings. You will be asked to confirm.",
+                "復元すると端末内のキャラクター、グループ、チャット履歴、通常設定が置き換わります。ファイル選択後に確認します。");
+        add("选择备份文件", "Choose backup file", "バックアップファイルを選択");
+        add("安全说明", "Security", "セキュリティ");
+        add("备份未加密，可能包含私人聊天、图片和角色设定。请保存到可信位置，不要公开分享。还原不会覆盖当前设备 KeyStore 中的密钥和账户令牌。",
+                "Backups are not encrypted and may contain private chats, images, and character settings. Store them safely and do not share them publicly. Restoring does not overwrite keys or account tokens in this device's KeyStore.",
+                "バックアップは暗号化されず、個人チャット、画像、キャラクター設定を含む場合があります。安全な場所に保管し、公開しないでください。復元してもこの端末のKeyStore内のキーやアカウントトークンは上書きされません。");
+        add("尚未执行备份或还原", "No backup or restore has run", "バックアップまたは復元はまだ実行されていません");
+        add("正在创建备份…", "Creating backup…", "バックアップを作成中…");
+        add("备份已保存", "Backup saved", "バックアップを保存しました");
+        add("备份已导出", "Backup exported", "バックアップを書き出しました");
+        add("正在读取备份…", "Reading backup…", "バックアップを読み込み中…");
+        add("备份已读取 · ", "Backup loaded · ", "バックアップを読み込みました · ");
+        add("还原此备份？", "Restore this backup?", "このバックアップを復元しますか？");
+        add("本机现有角色、群聊、聊天记录和普通设置将被替换。API Key 与账户令牌保持不变。此操作无法撤销。",
+                "Local characters, groups, chat history, and regular settings will be replaced. API keys and account tokens stay unchanged. This cannot be undone.",
+                "端末内のキャラクター、グループ、チャット履歴、通常設定が置き換わります。APIキーとアカウントトークンは変更されません。この操作は元に戻せません。");
+        add("还原", "Restore", "復元");
+        add("正在还原备份…", "Restoring backup…", "バックアップを復元中…");
+        add("备份还原完成", "Backup restored", "バックアップを復元しました");
+        add("已还原备份", "Backup restored", "バックアップを復元しました");
+        add("备份失败：", "Backup failed: ", "バックアップ失敗：");
+        add("读取备份失败：", "Could not read backup: ", "バックアップ読み込み失敗：");
+        add("还原失败：", "Restore failed: ", "復元失敗：");
         add("0.9.0 · 原生角色聊天客户端",
                 "0.9.0 · Native character chat client",
                 "0.9.0 · ネイティブキャラクターチャット");
@@ -686,6 +724,14 @@ public final class L10n {
             return japanese
                     ? matcher.group(1) + "と音声通話"
                     : "Voice call with " + matcher.group(1);
+        }
+        matcher = BACKUP_SUMMARY.matcher(source);
+        if (matcher.matches()) {
+            return japanese
+                    ? "キャラクター" + matcher.group(1) + "人 · グループ"
+                    + matcher.group(2) + "件 · メッセージ" + matcher.group(3) + "件"
+                    : matcher.group(1) + " characters · " + matcher.group(2)
+                    + " groups · " + matcher.group(3) + " messages";
         }
         matcher = CLEAR_SINGLE.matcher(source);
         if (matcher.matches()) {

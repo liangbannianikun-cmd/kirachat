@@ -1,6 +1,7 @@
 import PhotosUI
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct MeView: View {
     @EnvironmentObject private var store: AppStore
@@ -46,6 +47,15 @@ struct MeView: View {
                                 title: "连接与账户",
                                 detail: store.settings.activeModel.isEmpty
                                     ? "尚未选择模型" : store.settings.activeModel)
+                        }
+                        Divider().padding(.leading, 58)
+                        NavigationLink {
+                            BackupRestoreView()
+                        } label: {
+                            SettingsRow(
+                                icon: "arrow.triangle.2.circlepath",
+                                title: "备份与还原",
+                                detail: "角色、聊天、图片与普通设置")
                         }
                         Divider().padding(.leading, 58)
                         NavigationLink {
@@ -456,6 +466,148 @@ private struct AccountLoginView: View {
                 loginTask = nil
             }
         }
+    }
+}
+
+private struct BackupRestoreView: View {
+    @EnvironmentObject private var store: AppStore
+    @State private var exportDocument = BackupJSONDocument()
+    @State private var showExporter = false
+    @State private var showImporter = false
+    @State private var showRestoreConfirmation = false
+    @State private var pendingRestoreData: Data?
+    @State private var pendingSummary = ""
+    @State private var status = NSLocalizedString("尚未执行备份或还原", comment: "")
+    @State private var isError = false
+
+    var body: some View {
+        Form {
+            Section("创建备份") {
+                Text("把角色、群聊、聊天记录、世界书、头像、聊天背景和普通设置保存为一个 JSON 文件。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Button {
+                    createBackup()
+                } label: {
+                    Label("导出备份", systemImage: "square.and.arrow.up")
+                }
+            }
+
+            Section("还原备份") {
+                Text("还原会替换本机现有角色、群聊、聊天记录和普通设置。选择文件后会再次确认。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Button {
+                    showImporter = true
+                } label: {
+                    Label("选择备份文件", systemImage: "square.and.arrow.down")
+                }
+            }
+
+            Section("安全说明") {
+                Text("备份未加密，可能包含私人聊天、图片和角色设定。请保存到可信位置，不要公开分享。API Key 与 GPT/Copilot OAuth 令牌不会写入备份，还原也不会覆盖当前 Keychain 凭据。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Label(status, systemImage: isError ? "exclamationmark.circle" : "checkmark.circle")
+                    .font(.footnote)
+                    .foregroundStyle(isError ? Color.red : Color.secondary)
+            }
+        }
+        .navigationTitle("备份与还原")
+        .fileExporter(
+            isPresented: $showExporter,
+            document: exportDocument,
+            contentType: .json,
+            defaultFilename: defaultBackupName) { result in
+                switch result {
+                case .success:
+                    status = NSLocalizedString("备份已保存", comment: "")
+                    isError = false
+                case .failure(let error):
+                    status = "\(NSLocalizedString("备份失败", comment: ""))：\(error.localizedDescription)"
+                    isError = true
+                }
+            }
+        .fileImporter(
+            isPresented: $showImporter,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: false) { result in
+                do {
+                    guard let url = try result.get().first else { return }
+                    let scoped = url.startAccessingSecurityScopedResource()
+                    defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                    let data = try Data(contentsOf: url, options: .mappedIfSafe)
+                    guard data.count <= 180 * 1024 * 1024 else {
+                        throw KiraError.message(NSLocalizedString("备份文件不能超过 180 MB", comment: ""))
+                    }
+                    pendingSummary = try store.backupSummary(from: data)
+                    pendingRestoreData = data
+                    showRestoreConfirmation = true
+                    status = "\(NSLocalizedString("备份已读取", comment: "")) · \(pendingSummary)"
+                    isError = false
+                } catch {
+                    status = "\(NSLocalizedString("读取备份失败", comment: ""))：\(error.localizedDescription)"
+                    isError = true
+                }
+            }
+        .alert("还原此备份？", isPresented: $showRestoreConfirmation) {
+            Button("取消", role: .cancel) { pendingRestoreData = nil }
+            Button("还原", role: .destructive) { restoreBackup() }
+        } message: {
+            Text("\(pendingSummary)\n\n本机现有角色、群聊、聊天记录和普通设置将被替换。Keychain 凭据保持不变。此操作无法撤销。")
+        }
+    }
+
+    private var defaultBackupName: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        return "KiraChat-backup-\(formatter.string(from: Date()))"
+    }
+
+    private func createBackup() {
+        do {
+            exportDocument = BackupJSONDocument(data: try store.makeBackupData())
+            showExporter = true
+            status = NSLocalizedString("备份已准备，等待选择保存位置", comment: "")
+            isError = false
+        } catch {
+            status = "\(NSLocalizedString("备份失败", comment: ""))：\(error.localizedDescription)"
+            isError = true
+        }
+    }
+
+    private func restoreBackup() {
+        guard let data = pendingRestoreData else { return }
+        pendingRestoreData = nil
+        do {
+            try store.restoreBackup(from: data)
+            status = NSLocalizedString("备份还原完成", comment: "")
+            isError = false
+        } catch {
+            status = "\(NSLocalizedString("还原失败", comment: ""))：\(error.localizedDescription)"
+            isError = true
+        }
+    }
+}
+
+private struct BackupJSONDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+    var data = Data()
+
+    init(data: Data = Data()) {
+        self.data = data
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
     }
 }
 

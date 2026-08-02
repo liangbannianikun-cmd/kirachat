@@ -38,6 +38,9 @@
             android:name=".ui.SettingsActivity"
             android:screenOrientation="unspecified" />
         <activity
+            android:name=".ui.BackupRestoreActivity"
+            android:screenOrientation="unspecified" />
+        <activity
             android:name=".ui.CharacterProfileActivity"
             android:screenOrientation="unspecified" />
         <activity

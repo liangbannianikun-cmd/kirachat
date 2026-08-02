@@ -124,6 +124,48 @@ final class AppStore: ObservableObject {
         modelRefreshError = ""
     }
 
+    func makeBackupData() throws -> Data {
+        let archive = BackupArchive(payload: PersistedState(
+            characters: characters,
+            groups: groups,
+            messages: allMessages,
+            settings: settings))
+        try archive.validate()
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        return try encoder.encode(archive)
+    }
+
+    func backupSummary(from data: Data) throws -> String {
+        try BackupArchive.decode(data).summary
+    }
+
+    func restoreBackup(from data: Data) throws {
+        let archive = try BackupArchive.decode(data)
+        let characterIDs = Set(archive.payload.characters.map(\.id))
+        var validGroups: [GroupChat] = []
+        for var group in archive.payload.groups {
+            group.memberIDs = Array(Set(group.memberIDs.filter(characterIDs.contains)))
+            if group.memberIDs.count >= 2 { validGroups.append(group) }
+        }
+        let conversationIDs = Set(
+            characterIDs.map { $0 } + validGroups.map { $0.conversationID })
+        let validMessages = archive.payload.messages.filter {
+            conversationIDs.contains($0.key)
+        }
+
+        isLoading = true
+        characters = archive.payload.characters
+        groups = validGroups
+        allMessages = validMessages
+        settings = archive.payload.settings
+        availableModels = []
+        modelRefreshError = ""
+        generationCounts = [:]
+        isLoading = false
+        ensureBuiltInCharacter()
+    }
+
     func addMessage(_ message: ChatMessage, to target: ConversationTarget) {
         allMessages[target.conversationID, default: []].append(message)
         touch(target)

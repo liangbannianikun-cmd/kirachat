@@ -407,6 +407,9 @@ public final class MainActivity extends AppCompatActivity {
         settings.addView(settingsRow("连接与账户", "直连 API、GPT / GitHub Copilot 账户、人格", v ->
                 startActivity(new Intent(this, SettingsActivity.class))));
         settings.addView(MiuixUi.divider(this, 18));
+        settings.addView(settingsRow("备份与还原", "角色、聊天、图片与普通设置", v ->
+                startActivity(new Intent(this, BackupRestoreActivity.class))));
+        settings.addView(MiuixUi.divider(this, 18));
         settings.addView(settingsRow("隐私与存储", "密钥由 Android Keystore 加密", null));
         settings.addView(MiuixUi.divider(this, 18));
         settings.addView(settingsRow("关于澄语", "0.9.0 · 原生角色聊天客户端", null));
