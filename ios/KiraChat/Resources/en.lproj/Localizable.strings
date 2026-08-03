@@ -175,3 +175,10 @@
 "输入新的群聊名称" = "Enter a new group name";
 "群聊名称最多 50 个字符。" = "Group names can contain up to 50 characters.";
 "保存" = "Save";
+"添加成员" = "Add Member";
+"添加群聊成员" = "Add Group Members";
+"%d 位可添加角色" = "%d available";
+"没有可添加的角色" = "No Characters Available";
+"当前本地角色都已经在群聊中。" = "Every local character is already in this group.";
+"选择要加入此群聊的本地角色。" = "Choose local characters to add to this group.";
+"添加" = "Add";

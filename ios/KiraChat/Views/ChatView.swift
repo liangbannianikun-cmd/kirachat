@@ -346,6 +346,7 @@ private struct ChatInfoView: View {
     @State private var backgroundItem: PhotosPickerItem?
     @State private var confirmClear = false
     @State private var showRenameGroup = false
+    @State private var showAddMembers = false
     @State private var groupNameDraft = ""
 
     private var filteredMessages: [ChatMessage] {
@@ -371,6 +372,22 @@ private struct ChatInfoView: View {
                             Text(group.name)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    Button {
+                        showAddMembers = true
+                    } label: {
+                        HStack {
+                            Label("添加群聊成员", systemImage: "person.badge.plus")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(String(format: NSLocalizedString(
+                                "%d 位可添加角色", comment: ""), availableMemberCount))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                             Image(systemName: "chevron.right")
                                 .font(.caption.bold())
                                 .foregroundStyle(.tertiary)
@@ -414,6 +431,14 @@ private struct ChatInfoView: View {
         } message: {
             Text("群聊名称最多 50 个字符。")
         }
+        .sheet(isPresented: $showAddMembers) {
+            if let group = currentGroup {
+                NavigationStack {
+                    AddGroupMembersView(groupID: group.id)
+                }
+                .environmentObject(store)
+            }
+        }
         .onChange(of: backgroundItem) { item in
             guard let item else { return }
             Task {
@@ -426,6 +451,12 @@ private struct ChatInfoView: View {
     private var currentGroup: GroupChat? {
         guard case .group(let id) = target else { return nil }
         return store.group(id: id)
+    }
+
+    private var availableMemberCount: Int {
+        guard let group = currentGroup else { return 0 }
+        let currentIDs = Set(group.memberIDs)
+        return store.characters.filter { !currentIDs.contains($0.id) }.count
     }
 
     private func renameGroup() {
@@ -487,6 +518,88 @@ private struct ChatInfoView: View {
             group.chatBackgroundData = data
             store.updateGroup(group)
         }
+    }
+}
+
+private struct AddGroupMembersView: View {
+    @EnvironmentObject private var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let groupID: String
+    @State private var selectedIDs: Set<String> = []
+
+    private var candidates: [CharacterCard] {
+        guard let group = store.group(id: groupID) else { return [] }
+        let currentIDs = Set(group.memberIDs)
+        return store.characters.filter { !currentIDs.contains($0.id) }
+    }
+
+    var body: some View {
+        List {
+            if candidates.isEmpty {
+                Section {
+                    VStack(spacing: 10) {
+                        Image(systemName: "person.2.slash")
+                            .font(.system(size: 34, weight: .light))
+                            .foregroundStyle(.secondary)
+                        Text("没有可添加的角色")
+                            .font(.headline)
+                        Text("当前本地角色都已经在群聊中。")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 28)
+                }
+            } else {
+                Section("选择要加入此群聊的本地角色。") {
+                    ForEach(candidates) { card in
+                        Button {
+                            if selectedIDs.contains(card.id) {
+                                selectedIDs.remove(card.id)
+                            } else {
+                                selectedIDs.insert(card.id)
+                            }
+                        } label: {
+                            HStack(spacing: 12) {
+                                CharacterAvatar(character: card, size: 44)
+                                Text(card.name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Image(systemName: selectedIDs.contains(card.id)
+                                      ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3)
+                                    .foregroundStyle(selectedIDs.contains(card.id)
+                                                     ? Color.green : Color.secondary)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .navigationTitle("添加群聊成员")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("取消") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("添加") { addSelectedMembers() }
+                    .disabled(selectedIDs.isEmpty)
+            }
+        }
+    }
+
+    private func addSelectedMembers() {
+        guard var group = store.group(id: groupID), !selectedIDs.isEmpty else { return }
+        let existingIDs = Set(group.memberIDs)
+        group.memberIDs.append(contentsOf: candidates.compactMap { card in
+            selectedIDs.contains(card.id) && !existingIDs.contains(card.id)
+                ? card.id : nil
+        })
+        store.updateGroup(group)
+        dismiss()
     }
 }
 

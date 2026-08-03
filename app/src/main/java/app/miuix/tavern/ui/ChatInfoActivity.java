@@ -210,6 +210,7 @@ public final class ChatInfoActivity extends AppCompatActivity {
             itemParams.height = MiuixUi.dp(this, 92);
             grid.addView(item, itemParams);
         }
+        grid.addView(buildAddMemberItem(), memberGridParams());
         section.addView(grid, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         groupSummary = MiuixUi.text(
@@ -219,6 +220,94 @@ public final class ChatInfoActivity extends AppCompatActivity {
         section.addView(groupSummary, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, MiuixUi.dp(this, 28)));
         return section;
+    }
+
+    private View buildAddMemberItem() {
+        LinearLayout item = MiuixUi.vertical(this);
+        item.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        FrameLayout iconBackground = new FrameLayout(this);
+        iconBackground.setBackground(MiuixUi.outlinedShape(
+                MiuixUi.surface(this), MiuixUi.HAIRLINE, 10, this));
+        LineIconView plus = new LineIconView(this);
+        plus.setType(LineIconView.PLUS);
+        iconBackground.addView(plus, new FrameLayout.LayoutParams(
+                MiuixUi.dp(this, 25), MiuixUi.dp(this, 25), Gravity.CENTER));
+        item.addView(iconBackground, new LinearLayout.LayoutParams(
+                MiuixUi.dp(this, 52), MiuixUi.dp(this, 52)));
+
+        TextView label = MiuixUi.text(
+                this, "添加成员", 12, MiuixUi.TEXT_SECONDARY, false);
+        label.setGravity(Gravity.CENTER);
+        label.setSingleLine(true);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, MiuixUi.dp(this, 28));
+        labelParams.topMargin = MiuixUi.dp(this, 4);
+        item.addView(label, labelParams);
+        item.setContentDescription(L10n.tr(this, "添加群聊成员"));
+        item.setOnClickListener(v -> showAddMembersDialog());
+        item.setClickable(true);
+        item.setFocusable(true);
+        MiuixUi.pressable(item, 0.95f);
+        return item;
+    }
+
+    private GridLayout.LayoutParams memberGridParams() {
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        params.width = getResources().getDisplayMetrics().widthPixels / 5
+                - MiuixUi.dp(this, 5);
+        params.height = MiuixUi.dp(this, 92);
+        return params;
+    }
+
+    private void showAddMembersDialog() {
+        if (group == null) return;
+        List<CharacterCard> candidates = new ArrayList<>();
+        for (CharacterCard card : store.getCharacters()) {
+            if (!group.members.contains(card.id)) candidates.add(card);
+        }
+        if (candidates.isEmpty()) {
+            LocalizedToast.makeText(
+                    this, "没有可添加的角色", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        CharSequence[] names = new CharSequence[candidates.size()];
+        boolean[] selected = new boolean[candidates.size()];
+        for (int i = 0; i < candidates.size(); i++) {
+            names[i] = candidates.get(i).name;
+        }
+        LocalizedAlertDialogBuilder builder = new LocalizedAlertDialogBuilder(this);
+        builder.setTitle("添加群聊成员");
+        builder.setMultiChoiceItems(names, selected,
+                (dialog, which, checked) -> selected[which] = checked);
+        builder.setNegativeButton("取消", null);
+        builder.setPositiveButton("添加", null);
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(ignored -> dialog.getButton(
+                AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                    int added = 0;
+                    for (int i = 0; i < candidates.size(); i++) {
+                        CharacterCard card = candidates.get(i);
+                        if (selected[i] && !group.members.contains(card.id)) {
+                            group.members.add(card.id);
+                            added++;
+                        }
+                    }
+                    if (added == 0) {
+                        LocalizedToast.makeText(
+                                this, "请至少选择一位角色", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    store.upsertGroup(group);
+                    loadMembers();
+                    setContentView(buildContent());
+                    setResult(Activity.RESULT_OK);
+                    LocalizedToast.makeText(
+                            this, "群聊成员已添加", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                }));
+        dialog.show();
     }
 
     private AvatarView memberAvatar(CharacterCard card) {
