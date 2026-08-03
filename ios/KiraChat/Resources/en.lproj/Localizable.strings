@@ -171,3 +171,7 @@
 "备份中的单个图片不能超过 20 MB" = "Each image in a backup must be 20 MB or smaller";
 "备份图片总量不能超过 128 MB" = "Backup images cannot exceed 128 MB in total";
 "%d 位角色 · %d 个群聊 · %d 条消息" = "%d characters · %d groups · %d messages";
+"修改群聊名称" = "Rename group";
+"输入新的群聊名称" = "Enter a new group name";
+"群聊名称最多 50 个字符。" = "Group names can contain up to 50 characters.";
+"保存" = "Save";

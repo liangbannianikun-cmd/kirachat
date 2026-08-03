@@ -345,6 +345,8 @@ private struct ChatInfoView: View {
     @State private var query = ""
     @State private var backgroundItem: PhotosPickerItem?
     @State private var confirmClear = false
+    @State private var showRenameGroup = false
+    @State private var groupNameDraft = ""
 
     private var filteredMessages: [ChatMessage] {
         let values = store.messages(for: target)
@@ -356,6 +358,26 @@ private struct ChatInfoView: View {
 
     var body: some View {
         List {
+            if let group = currentGroup {
+                Section {
+                    Button {
+                        groupNameDraft = group.name
+                        showRenameGroup = true
+                    } label: {
+                        HStack {
+                            Text("群聊名称")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(group.name)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+            }
             Section {
                 TextField("查找聊天记录", text: $query)
                 ForEach(filteredMessages.prefix(30)) { message in
@@ -383,6 +405,15 @@ private struct ChatInfoView: View {
             Button("清空", role: .destructive) { store.clearMessages(for: target) }
             Button("取消", role: .cancel) {}
         }
+        .alert("修改群聊名称", isPresented: $showRenameGroup) {
+            TextField("输入新的群聊名称", text: $groupNameDraft)
+            Button("取消", role: .cancel) {}
+            Button("保存") { renameGroup() }
+                .disabled(groupNameDraft.trimmingCharacters(
+                    in: .whitespacesAndNewlines).isEmpty)
+        } message: {
+            Text("群聊名称最多 50 个字符。")
+        }
         .onChange(of: backgroundItem) { item in
             guard let item else { return }
             Task {
@@ -390,6 +421,19 @@ private struct ChatInfoView: View {
                 setBackground(data)
             }
         }
+    }
+
+    private var currentGroup: GroupChat? {
+        guard case .group(let id) = target else { return nil }
+        return store.group(id: id)
+    }
+
+    private func renameGroup() {
+        guard var group = currentGroup else { return }
+        let clean = groupNameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return }
+        group.name = String(clean.prefix(50))
+        store.updateGroup(group)
     }
 
     private var mutedBinding: Binding<Bool> {

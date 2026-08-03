@@ -6,10 +6,12 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.InputFilter;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -40,6 +42,8 @@ public final class ChatInfoActivity extends AppCompatActivity {
     private CharacterCard character;
     private GroupChat group;
     private final List<CharacterCard> members = new ArrayList<>();
+    private TextView groupNameValue;
+    private TextView groupSummary;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -87,6 +91,11 @@ public final class ChatInfoActivity extends AppCompatActivity {
 
         page.addView(buildMembers());
         page.addView(sectionGap());
+        if (group != null) {
+            page.addView(actionValueRow(
+                    "群聊名称", group.name, v -> showRenameGroupDialog()));
+            page.addView(sectionGap());
+        }
         page.addView(actionRow("查找聊天记录", v -> openSearch()));
         page.addView(divider());
         page.addView(switchRow("消息免打扰", isMuted(), checked -> {
@@ -203,11 +212,11 @@ public final class ChatInfoActivity extends AppCompatActivity {
         }
         section.addView(grid, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView hint = MiuixUi.text(
+        groupSummary = MiuixUi.text(
                 this, group.name + " · " + members.size() + " 人",
                 14, MiuixUi.TEXT_SECONDARY, false);
-        hint.setGravity(Gravity.CENTER);
-        section.addView(hint, new LinearLayout.LayoutParams(
+        groupSummary.setGravity(Gravity.CENTER);
+        section.addView(groupSummary, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, MiuixUi.dp(this, 28)));
         return section;
     }
@@ -240,6 +249,83 @@ public final class ChatInfoActivity extends AppCompatActivity {
         MiuixUi.pressable(row, 0.99f);
         row.setMinimumHeight(MiuixUi.dp(this, 58));
         return row;
+    }
+
+    private View actionValueRow(
+            String label, String value, View.OnClickListener listener) {
+        LinearLayout row = MiuixUi.horizontal(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(MiuixUi.dp(this, 18), 0, MiuixUi.dp(this, 12), 0);
+        row.setBackgroundColor(MiuixUi.surface(this));
+        TextView text = MiuixUi.text(
+                this, label, 17, MiuixUi.TEXT_PRIMARY, false);
+        row.addView(text, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+        groupNameValue = MiuixUi.rawText(
+                this, value, 15, MiuixUi.TEXT_SECONDARY, false);
+        groupNameValue.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+        groupNameValue.setSingleLine(true);
+        groupNameValue.setEllipsize(TextUtils.TruncateAt.END);
+        row.addView(groupNameValue, new LinearLayout.LayoutParams(
+                MiuixUi.dp(this, 160), ViewGroup.LayoutParams.MATCH_PARENT));
+        TextView arrow = MiuixUi.text(
+                this, "›", 32, Color.rgb(180, 180, 184), false);
+        arrow.setGravity(Gravity.CENTER);
+        row.addView(arrow, new LinearLayout.LayoutParams(
+                MiuixUi.dp(this, 28), MiuixUi.dp(this, 42)));
+        row.setOnClickListener(listener);
+        row.setClickable(true);
+        row.setFocusable(true);
+        MiuixUi.ripple(row, Color.WHITE, 0);
+        MiuixUi.pressable(row, 0.99f);
+        row.setMinimumHeight(MiuixUi.dp(this, 58));
+        return row;
+    }
+
+    private void showRenameGroupDialog() {
+        if (group == null) return;
+        EditText input = MiuixUi.field(this, "输入新的群聊名称", false);
+        input.setText(group.name);
+        input.setSelection(input.length());
+        input.setSingleLine(true);
+        input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(50)});
+        LinearLayout container = MiuixUi.vertical(this);
+        int horizontal = MiuixUi.dp(this, 20);
+        container.setPadding(horizontal, MiuixUi.dp(this, 6),
+                horizontal, MiuixUi.dp(this, 2));
+        container.addView(input, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, MiuixUi.dp(this, 50)));
+
+        LocalizedAlertDialogBuilder builder = new LocalizedAlertDialogBuilder(this);
+        builder.setTitle("修改群聊名称");
+        builder.setView(container);
+        builder.setNegativeButton("取消", null);
+        builder.setPositiveButton("保存", null);
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(ignored -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String name = input.getText().toString().trim();
+                if (name.isEmpty()) {
+                    input.setError(L10n.tr(this, "群聊名称不能为空"));
+                    return;
+                }
+                group.name = name;
+                store.upsertGroup(group);
+                if (groupNameValue != null) groupNameValue.setText(name);
+                if (groupSummary != null) {
+                    String summary = name + " · " + members.size() + " 人";
+                    groupSummary.setText(L10n.tr(this, summary));
+                }
+                setResult(Activity.RESULT_OK);
+                LocalizedToast.makeText(
+                        this, "群聊名称已修改", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            });
+            input.requestFocus();
+            dialog.getWindow().setSoftInputMode(
+                    android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        });
+        dialog.show();
     }
 
     private View switchRow(String label, boolean checked, SwitchListener listener) {

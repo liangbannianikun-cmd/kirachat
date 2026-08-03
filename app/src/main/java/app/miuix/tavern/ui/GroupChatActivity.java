@@ -80,6 +80,7 @@ public final class GroupChatActivity extends AppCompatActivity
     private EditText composer;
     private TextView sendButton;
     private TextView connectionLabel;
+    private TextView titleLabel;
     private ImageView backgroundView;
     private ChatMorePanel morePanel;
     private File pendingCameraFile;
@@ -208,10 +209,10 @@ public final class GroupChatActivity extends AppCompatActivity
         titles.setGravity(Gravity.CENTER);
         toolbar.addView(titles, new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
-        TextView name = MiuixUi.rawText(
+        titleLabel = MiuixUi.rawText(
                 this, group.name, 17, MiuixUi.TEXT_PRIMARY, true);
-        name.setGravity(Gravity.CENTER);
-        titles.addView(name, new LinearLayout.LayoutParams(
+        titleLabel.setGravity(Gravity.CENTER);
+        titles.addView(titleLabel, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, MiuixUi.dp(this, 29)));
         connectionLabel = MiuixUi.text(
                 this,
@@ -893,6 +894,7 @@ public final class GroupChatActivity extends AppCompatActivity
         store.touchGroup(group.id);
         GroupChat updated = store.getGroup(group.id);
         if (updated != null) group = updated;
+        if (titleLabel != null) titleLabel.setText(group.name);
         refreshMembers();
         if (!generating && recycler != null) {
             messages = new ArrayList<>(store.getMessages(group.conversationId()));

@@ -247,6 +247,12 @@ public final class L10n {
         add("角色不存在", "Character not found", "キャラクターが見つかりません");
 
         add("群聊名称", "Group name", "グループ名");
+        add("修改群聊名称", "Rename group", "グループ名を変更");
+        add("输入新的群聊名称", "Enter a new group name", "新しいグループ名を入力");
+        add("群聊名称不能为空", "Group name cannot be empty", "グループ名は空にできません");
+        add("群聊名称已修改", "Group name updated", "グループ名を変更しました");
+        add("群聊名称最多 50 个字符。", "Group names can contain up to 50 characters.", "グループ名は50文字以内です。");
+        add("保存", "Save", "保存");
         add("例如：深夜电台", "Example: Midnight Radio", "例：深夜ラジオ");
         add("还需要一位角色", "One more character is required", "あと1人必要です");
         add("本地角色", "Local character", "ローカルキャラクター");
