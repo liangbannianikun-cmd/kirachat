@@ -59,6 +59,19 @@ struct MeView: View {
                         }
                         Divider().padding(.leading, 58)
                         NavigationLink {
+                            SyncSettingsView()
+                        } label: {
+                            SettingsRow(
+                                icon: "icloud.and.arrow.up",
+                                title: "服务器同步",
+                                detail: !SyncConfiguration.configured
+                                    ? NSLocalizedString("尚未配置", comment: "")
+                                    : SyncConfiguration.automatic
+                                    ? NSLocalizedString("自动同步已开启", comment: "")
+                                    : NSLocalizedString("已配置 · 手动同步", comment: ""))
+                        }
+                        Divider().padding(.leading, 58)
+                        NavigationLink {
                             PrivacyView()
                         } label: {
                             SettingsRow(
@@ -99,6 +112,195 @@ struct MeView: View {
         let clean = persona.trimmingCharacters(in: .whitespacesAndNewlines)
         store.updateSettings { $0.persona = clean.isEmpty ? "你" : clean }
     }
+}
+
+private struct SyncSettingsView: View {
+    @EnvironmentObject private var store: AppStore
+    @State private var serverURL = ""
+    @State private var token = ""
+    @State private var encryptionPassword = ""
+    @State private var automatic = false
+    @State private var status = NSLocalizedString("尚未同步", comment: "")
+    @State private var isError = false
+    @State private var busy = false
+    @State private var overwriteChoice: SyncOverwriteChoice?
+
+    var body: some View {
+        Form {
+            Section("服务器连接") {
+                TextField("https://sync.example.com", text: $serverURL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                SecureField("同步令牌（至少 24 个字符）", text: $token)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                SecureField("端到端加密密码（至少 8 个字符）", text: $encryptionPassword)
+                Toggle("自动同步", isOn: $automatic)
+                HStack {
+                    Button {
+                        testConnection()
+                    } label: {
+                        Label("测试连接", systemImage: "network")
+                    }
+                    .disabled(busy)
+                    Spacer()
+                    Button("保存设置") { _ = saveConfiguration(showSuccess: true) }
+                        .disabled(busy)
+                }
+            } footer: {
+                Text("连接自部署的澄语同步服务器，在设备间自动同步角色、群聊、消息、头像、背景和普通设置。")
+            }
+
+            Section("同步操作") {
+                Button {
+                    runSync(.automatic)
+                } label: {
+                    Label("立即同步", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(busy)
+                Button {
+                    overwriteChoice = .upload
+                } label: {
+                    Label("上传本机", systemImage: "arrow.up.circle")
+                }
+                .disabled(busy)
+                Button {
+                    overwriteChoice = .download
+                } label: {
+                    Label("下载服务器", systemImage: "arrow.down.circle")
+                }
+                .disabled(busy)
+            } footer: {
+                Text("首次连接或发生冲突时，请明确选择保留本机内容或服务器内容。正常情况下“立即同步”会自动判断上传或下载。")
+            }
+
+            Section("安全与冲突保护") {
+                Text("同步内容会在本机加密后上传；加密密码不会发送给服务器。API Key、GPT/Copilot 令牌、本地模型和语音凭据不会同步。两台设备同时修改时会暂停并要求手动选择，避免静默覆盖。生产环境请使用 HTTPS。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Label(status, systemImage: isError
+                      ? "exclamationmark.circle" : busy
+                      ? "arrow.triangle.2.circlepath" : "checkmark.circle")
+                    .font(.footnote)
+                    .foregroundStyle(isError ? Color.red : Color.secondary)
+            }
+        }
+        .navigationTitle("服务器同步")
+        .disabled(busy)
+        .onAppear { loadConfiguration() }
+        .alert(item: $overwriteChoice) { choice in
+            Alert(
+                title: Text(choice == .upload
+                            ? "用本机内容覆盖服务器？" : "用服务器内容替换本机？"),
+                message: Text(choice == .upload
+                              ? "服务器当前快照会被本机内容替换。其他设备下次同步会下载此版本。"
+                              : "本机角色、群聊、消息、头像、背景和普通设置会被服务器快照替换。此操作无法撤销。"),
+                primaryButton: .destructive(Text(choice == .upload
+                                                 ? "上传本机" : "下载服务器")) {
+                    runSync(choice == .upload ? .forceUpload : .forceDownload)
+                },
+                secondaryButton: .cancel(Text("取消")))
+        }
+    }
+
+    private func loadConfiguration() {
+        serverURL = SyncConfiguration.serverURL
+        token = SyncConfiguration.token
+        encryptionPassword = SyncConfiguration.encryptionPassword
+        automatic = SyncConfiguration.automatic
+        status = statusText
+    }
+
+    private var statusText: String {
+        guard let lastSync = SyncConfiguration.lastSync else {
+            return SyncConfiguration.status
+        }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return "\(SyncConfiguration.status) · \(formatter.string(from: lastSync))"
+    }
+
+    private func saveConfiguration(showSuccess: Bool) -> Bool {
+        let cleanURL = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard cleanURL.hasPrefix("https://") || cleanURL.hasPrefix("http://") else {
+            setError("服务器地址必须以 https:// 或 http:// 开头")
+            return false
+        }
+        guard cleanToken.count >= 24 else {
+            setError("同步令牌至少需要 24 个字符")
+            return false
+        }
+        guard encryptionPassword.count >= 8 else {
+            setError("加密密码至少需要 8 个字符")
+            return false
+        }
+        SyncConfiguration.save(
+            serverURL: cleanURL,
+            token: cleanToken,
+            password: encryptionPassword,
+            automatic: automatic)
+        if showSuccess {
+            status = NSLocalizedString("同步设置已保存", comment: "")
+            isError = false
+        }
+        return true
+    }
+
+    private func testConnection() {
+        guard saveConfiguration(showSuccess: false) else { return }
+        busy = true
+        status = NSLocalizedString("正在测试服务器…", comment: "")
+        isError = false
+        Task {
+            do {
+                let message = try await RemoteSyncService.testConnection()
+                SyncConfiguration.setStatus(message)
+                status = message
+                busy = false
+            } catch {
+                setError(error.localizedDescription)
+                busy = false
+            }
+        }
+    }
+
+    private func runSync(_ mode: RemoteSyncMode) {
+        guard saveConfiguration(showSuccess: false) else { return }
+        busy = true
+        status = NSLocalizedString(
+            mode == .forceUpload ? "正在上传本机内容…"
+                : mode == .forceDownload ? "正在下载服务器内容…" : "正在同步…",
+            comment: "")
+        isError = false
+        Task {
+            do {
+                status = try await store.performRemoteSync(mode)
+                isError = false
+                busy = false
+            } catch {
+                setError(error.localizedDescription)
+                busy = false
+            }
+        }
+    }
+
+    private func setError(_ value: String) {
+        status = NSLocalizedString(value, comment: "")
+        isError = true
+        SyncConfiguration.setStatus(status)
+    }
+}
+
+private enum SyncOverwriteChoice: String, Identifiable {
+    case upload
+    case download
+    var id: String { rawValue }
 }
 
 private struct SettingsRow: View {

@@ -20,6 +20,10 @@ final class AppStore: ObservableObject {
     private static let copilotAccessAccount = "copilot-access-token"
     private static let copilotLoginAccount = "copilot-login"
     private var isLoading = true
+    private var remoteSyncRunning = false
+    private var applyingRemoteSync = false
+    private var syncScheduleGeneration = 0
+    private var lastForegroundSyncAttempt = Date.distantPast
 
     init() {
         load()
@@ -134,6 +138,190 @@ final class AppStore: ObservableObject {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return try encoder.encode(archive)
+    }
+
+    func makeSyncPayloadData() throws -> Data {
+        let payload = SyncPayload(
+            characters: characters.map { card in
+                SyncCharacter(
+                    id: card.id,
+                    name: card.name,
+                    description: card.description,
+                    personality: card.personality,
+                    scenario: card.scenario,
+                    firstMessage: card.firstMessage,
+                    exampleDialogue: card.exampleDialogue,
+                    creatorNotes: card.creatorNotes,
+                    worldBookJSON: card.worldBookJSON,
+                    avatarData: card.avatarData,
+                    chatBackgroundData: card.chatBackgroundData,
+                    lastUsed: milliseconds(card.lastUsed),
+                    unread: card.unread,
+                    muted: card.muted,
+                    pinned: card.pinned)
+            },
+            groups: groups.map { group in
+                SyncGroup(
+                    id: group.id,
+                    name: group.name,
+                    memberIDs: group.memberIDs,
+                    lastUsed: milliseconds(group.lastUsed),
+                    unread: group.unread,
+                    muted: group.muted,
+                    pinned: group.pinned,
+                    chatBackgroundData: group.chatBackgroundData)
+            },
+            messages: allMessages.mapValues { values in
+                values.map { message in
+                    SyncMessage(
+                        id: message.id.uuidString,
+                        role: message.role.rawValue,
+                        content: message.content,
+                        speaker: message.speaker,
+                        attachment: message.attachment.rawValue,
+                        imageData: message.imageData,
+                        latitude: message.latitude,
+                        longitude: message.longitude,
+                        callDurationSeconds: message.callDurationSeconds,
+                        timestamp: milliseconds(message.timestamp),
+                        failed: message.failed)
+                }
+            },
+            settings: SyncPortableSettings(
+                persona: settings.persona,
+                personaAvatarData: settings.personaAvatarData,
+                webSearch: settings.webSearch,
+                showReasoning: settings.showReasoning,
+                groupAutonomousMessages: settings.groupAutonomousMessages))
+        try payload.validate()
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let data = try encoder.encode(payload)
+        guard data.count <= 180 * 1024 * 1024 else {
+            throw KiraError.message(NSLocalizedString("同步内容不能超过 180 MB", comment: ""))
+        }
+        return data
+    }
+
+    func restoreSyncPayloadData(_ data: Data) throws {
+        guard data.count <= 180 * 1024 * 1024 else {
+            throw KiraError.message(NSLocalizedString("同步内容不能超过 180 MB", comment: ""))
+        }
+        let payload = try JSONDecoder().decode(SyncPayload.self, from: data)
+        try payload.validate()
+        let restoredCharacters = payload.characters.map { card in
+            CharacterCard(
+                id: card.id,
+                name: card.name,
+                description: card.description,
+                personality: card.personality,
+                scenario: card.scenario,
+                firstMessage: card.firstMessage,
+                exampleDialogue: card.exampleDialogue,
+                creatorNotes: card.creatorNotes,
+                worldBookJSON: card.worldBookJSON,
+                avatarData: card.avatarData,
+                lastUsed: date(card.lastUsed),
+                unread: card.unread,
+                muted: card.muted,
+                pinned: card.pinned,
+                chatBackgroundData: card.chatBackgroundData)
+        }
+        let characterIDs = Set(restoredCharacters.map(\.id))
+        let restoredGroups = payload.groups.compactMap { group -> GroupChat? in
+            var seen = Set<String>()
+            let members = group.memberIDs.filter {
+                characterIDs.contains($0) && seen.insert($0).inserted
+            }
+            guard members.count >= 2 else { return nil }
+            return GroupChat(
+                id: group.id,
+                name: group.name,
+                memberIDs: members,
+                lastUsed: date(group.lastUsed),
+                unread: group.unread,
+                muted: group.muted,
+                pinned: group.pinned,
+                chatBackgroundData: group.chatBackgroundData)
+        }
+        let validConversationIDs = characterIDs.union(
+            restoredGroups.map(\.conversationID))
+        let restoredMessages = payload.messages.compactMapValues { values in
+            values.map { message in
+                ChatMessage(
+                    id: UUID(uuidString: message.id) ?? UUID(),
+                    role: MessageRole(rawValue: message.role) ?? .assistant,
+                    content: message.content,
+                    speaker: message.speaker,
+                    attachment: AttachmentKind(rawValue: message.attachment) ?? .none,
+                    imageData: message.imageData,
+                    latitude: message.latitude,
+                    longitude: message.longitude,
+                    callDurationSeconds: message.callDurationSeconds,
+                    timestamp: date(message.timestamp),
+                    failed: message.failed)
+            }
+        }.filter { validConversationIDs.contains($0.key) }
+
+        var restoredSettings = settings
+        restoredSettings.persona = payload.settings.persona
+        restoredSettings.personaAvatarData = payload.settings.personaAvatarData
+        restoredSettings.webSearch = payload.settings.webSearch
+        restoredSettings.showReasoning = payload.settings.showReasoning
+        restoredSettings.groupAutonomousMessages = payload.settings.groupAutonomousMessages
+
+        isLoading = true
+        characters = restoredCharacters
+        groups = restoredGroups
+        allMessages = restoredMessages
+        settings = restoredSettings
+        availableModels = []
+        modelRefreshError = ""
+        generationCounts = [:]
+        isLoading = false
+        ensureBuiltInCharacter()
+    }
+
+    func performRemoteSync(_ mode: RemoteSyncMode) async throws -> String {
+        guard !remoteSyncRunning else {
+            throw KiraError.message(NSLocalizedString("同步正在进行中", comment: ""))
+        }
+        remoteSyncRunning = true
+        defer { remoteSyncRunning = false }
+        do {
+            let localPayload = try makeSyncPayloadData()
+            let outcome = try await RemoteSyncService.synchronize(
+                mode: mode, localPayload: localPayload)
+            switch outcome {
+            case .unchanged(let revision, let message),
+                    .uploaded(let revision, let message):
+                SyncConfiguration.record(
+                    revision: revision,
+                    digest: SHA256Digest.hex(localPayload),
+                    status: message)
+                return message
+            case .downloaded(let revision, let payload, let message):
+                applyingRemoteSync = true
+                defer { applyingRemoteSync = false }
+                try restoreSyncPayloadData(payload)
+                let restoredPayload = try makeSyncPayloadData()
+                SyncConfiguration.record(
+                    revision: revision,
+                    digest: SHA256Digest.hex(restoredPayload),
+                    status: message)
+                return message
+            }
+        } catch {
+            SyncConfiguration.setStatus(error.localizedDescription)
+            throw error
+        }
+    }
+
+    func syncWhenAppBecomesActive() {
+        guard SyncConfiguration.automatic, SyncConfiguration.configured,
+              Date().timeIntervalSince(lastForegroundSyncAttempt) >= 15 else { return }
+        lastForegroundSyncAttempt = Date()
+        Task { _ = try? await performRemoteSync(.automatic) }
     }
 
     func backupSummary(from data: Data) throws -> String {
@@ -555,6 +743,27 @@ final class AppStore: ObservableObject {
             withIntermediateDirectories: true,
             attributes: nil)
         try? data.write(to: Self.stateURL, options: .atomic)
+        scheduleAutomaticSync()
+    }
+
+    private func scheduleAutomaticSync() {
+        guard !applyingRemoteSync, SyncConfiguration.automatic,
+              SyncConfiguration.configured else { return }
+        syncScheduleGeneration += 1
+        let generation = syncScheduleGeneration
+        Task {
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            guard generation == syncScheduleGeneration else { return }
+            _ = try? await performRemoteSync(.automatic)
+        }
+    }
+
+    private func milliseconds(_ date: Date) -> Int64 {
+        Int64((date.timeIntervalSince1970 * 1000).rounded())
+    }
+
+    private func date(_ milliseconds: Int64) -> Date {
+        Date(timeIntervalSince1970: Double(milliseconds) / 1000)
     }
 
     private static var stateURL: URL {

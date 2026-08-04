@@ -26,10 +26,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import app.miuix.tavern.data.LocalStore;
+import app.miuix.tavern.data.SyncSettings;
 import app.miuix.tavern.model.AppConfig;
 import app.miuix.tavern.model.CharacterCard;
 import app.miuix.tavern.model.GroupChat;
 import app.miuix.tavern.util.CharacterCardImporter;
+import app.miuix.tavern.network.RemoteSyncManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -74,6 +76,14 @@ public final class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (content != null) showTab(activeTab);
+        RemoteSyncManager.syncOnForeground(this, (result, error) -> {
+            if (result != null && result.appliedRemote && !isFinishing()) {
+                store = new LocalStore(this);
+                showTab(activeTab);
+                LocalizedToast.makeText(
+                        this, "已从服务器自动同步", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private View buildShell() {
@@ -409,6 +419,12 @@ public final class MainActivity extends AppCompatActivity {
         settings.addView(MiuixUi.divider(this, 18));
         settings.addView(settingsRow("备份与还原", "角色、聊天、图片与普通设置", v ->
                 startActivity(new Intent(this, BackupRestoreActivity.class))));
+        settings.addView(MiuixUi.divider(this, 18));
+        SyncSettings syncSettings = new SyncSettings(this);
+        String syncDetail = !syncSettings.configured() ? "尚未配置"
+                : syncSettings.autoSync() ? "自动同步已开启" : "已配置 · 手动同步";
+        settings.addView(settingsRow("服务器同步", syncDetail, v ->
+                startActivity(new Intent(this, SyncSettingsActivity.class))));
         settings.addView(MiuixUi.divider(this, 18));
         settings.addView(settingsRow("隐私与存储", "密钥由 Android Keystore 加密", null));
         settings.addView(MiuixUi.divider(this, 18));

@@ -9,6 +9,7 @@ import app.miuix.tavern.model.AppConfig;
 import app.miuix.tavern.model.CharacterCard;
 import app.miuix.tavern.model.ChatMessage;
 import app.miuix.tavern.model.GroupChat;
+import app.miuix.tavern.network.RemoteSyncManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -344,6 +345,7 @@ public final class LocalStore {
     public synchronized void saveConfig(AppConfig config) {
         try {
             prefs.edit().putString(CONFIG, config.toJson().toString()).apply();
+            RemoteSyncManager.schedule(context);
         } catch (JSONException ignored) {
         }
     }
@@ -497,6 +499,7 @@ public final class LocalStore {
         if (!editor.commit()) throw new IOException("无法写入还原后的数据");
         migrateBuiltInCharacters();
         pruneInvalidGroups();
+        RemoteSyncManager.schedule(context);
     }
 
     public static String backupSummary(JSONObject root) {
@@ -668,6 +671,7 @@ public final class LocalStore {
             }
         }
         prefs.edit().putString(CHARACTERS, array.toString()).apply();
+        RemoteSyncManager.schedule(context);
     }
 
     private synchronized void saveGroups(List<GroupChat> groups) {
@@ -679,6 +683,7 @@ public final class LocalStore {
             }
         }
         prefs.edit().putString(GROUPS, array.toString()).apply();
+        RemoteSyncManager.schedule(context);
     }
 
     private static String threadKey(String id) {

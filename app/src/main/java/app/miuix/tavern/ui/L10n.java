@@ -551,6 +551,47 @@ public final class L10n {
         add("本地群聊", "Local group", "ローカルグループ");
         add("更换我的头像", "Change my avatar", "自分のアバターを変更");
         add("备份与还原", "Backup & restore", "バックアップと復元");
+        add("服务器同步", "Server sync", "サーバー同期");
+        add("服务器连接", "Server connection", "サーバー接続");
+        add("连接自部署的澄语同步服务器，在设备间自动同步角色、群聊、消息、头像、背景和普通设置。",
+                "Connect to a self-hosted KiraChat sync server to keep characters, groups, messages, avatars, backgrounds, and regular settings in sync across devices.",
+                "セルフホストの澄語同期サーバーに接続し、キャラクター、グループ、メッセージ、アバター、背景、通常設定を端末間で同期します。");
+        add("同步令牌（至少 24 个字符）", "Sync token (at least 24 characters)", "同期トークン（24文字以上）");
+        add("端到端加密密码（至少 8 个字符）", "End-to-end encryption password (at least 8 characters)", "エンドツーエンド暗号化パスワード（8文字以上）");
+        add("自动同步", "Automatic sync", "自動同期");
+        add("测试连接", "Test connection", "接続をテスト");
+        add("同步操作", "Sync actions", "同期操作");
+        add("首次连接或发生冲突时，请明确选择保留本机内容或服务器内容。正常情况下“立即同步”会自动判断上传或下载。",
+                "On first connection or after a conflict, explicitly choose the local or server copy. Normally, Sync now decides whether to upload or download.",
+                "初回接続時または競合時は、端末側かサーバー側のどちらを残すか選択してください。通常は「今すぐ同期」がアップロードまたはダウンロードを判断します。");
+        add("立即同步", "Sync now", "今すぐ同期");
+        add("上传本机", "Upload this device", "この端末をアップロード");
+        add("下载服务器", "Download server copy", "サーバーからダウンロード");
+        add("安全与冲突保护", "Security & conflict protection", "セキュリティと競合保護");
+        add("同步内容会在本机加密后上传；加密密码不会发送给服务器。API Key、GPT/Copilot 令牌、本地模型和语音凭据不会同步。两台设备同时修改时会暂停并要求手动选择，避免静默覆盖。生产环境请使用 HTTPS。",
+                "Sync data is encrypted on this device before upload; the encryption password is never sent to the server. API keys, GPT/Copilot tokens, local models, and voice credentials are excluded. Concurrent edits pause sync for an explicit choice. Use HTTPS in production.",
+                "同期データは端末上で暗号化され、暗号化パスワードはサーバーに送信されません。APIキー、GPT/Copilotトークン、ローカルモデル、音声認証情報は同期対象外です。同時編集時は同期を停止して明示的な選択を求めます。本番環境ではHTTPSを使用してください。");
+        add("尚未同步", "Not synced yet", "まだ同期していません");
+        add("正在测试服务器…", "Testing server…", "サーバーをテスト中…");
+        add("正在上传本机内容…", "Uploading this device…", "この端末をアップロード中…");
+        add("正在下载服务器内容…", "Downloading server copy…", "サーバーからダウンロード中…");
+        add("正在同步…", "Syncing…", "同期中…");
+        add("用本机内容覆盖服务器？", "Replace the server copy with this device?", "サーバー側をこの端末で置き換えますか？");
+        add("用服务器内容替换本机？", "Replace this device with the server copy?", "この端末をサーバー側で置き換えますか？");
+        add("服务器当前快照会被本机内容替换。其他设备下次同步会下载此版本。",
+                "The current server snapshot will be replaced by this device. Other devices will download this version on their next sync.",
+                "サーバーの現在のスナップショットをこの端末で置き換えます。他の端末は次回同期時にこの版をダウンロードします。");
+        add("本机角色、群聊、消息、头像、背景和普通设置会被服务器快照替换。此操作无法撤销。",
+                "Local characters, groups, messages, avatars, backgrounds, and regular settings will be replaced by the server snapshot. This cannot be undone.",
+                "端末内のキャラクター、グループ、メッセージ、アバター、背景、通常設定がサーバーのスナップショットで置き換えられます。元に戻せません。");
+        add("服务器地址必须以 https:// 或 http:// 开头", "Server URL must start with https:// or http://", "サーバーURLはhttps://またはhttp://で始めてください");
+        add("同步令牌至少需要 24 个字符", "Sync token must contain at least 24 characters", "同期トークンは24文字以上必要です");
+        add("加密密码至少需要 8 个字符", "Encryption password must contain at least 8 characters", "暗号化パスワードは8文字以上必要です");
+        add("同步设置已保存", "Sync settings saved", "同期設定を保存しました");
+        add("已从服务器自动同步", "Synced from the server", "サーバーから自動同期しました");
+        add("尚未配置", "Not configured", "未設定");
+        add("自动同步已开启", "Automatic sync is on", "自動同期オン");
+        add("已配置 · 手动同步", "Configured · Manual sync", "設定済み · 手動同期");
         add("角色、聊天、图片与普通设置", "Characters, chats, images, and settings", "キャラクター、チャット、画像、通常設定");
         add("把角色、群聊、聊天记录、世界书、头像、聊天背景和普通设置保存为一个 JSON 文件。",
                 "Save characters, groups, chat history, lorebooks, avatars, chat backgrounds, and regular settings to one JSON file.",

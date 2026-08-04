@@ -11,5 +11,6 @@ points-server/cache/
 points-server/data/
 points-server/.env
 output/
+sync-server/data/
 **/__pycache__/
 *.pyc

@@ -8,6 +8,7 @@ on:
       - codex/ios-port
     paths:
       - "ios/**"
+      - "sync-server/**"
       - "app/src/main/res/mipmap-nodpi/app_icon.png"
       - "app/src/main/res/raw/dounai_gpt.png"
       - ".github/workflows/ios-ipa.yml"
@@ -18,6 +19,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
+      - name: Test sync server
+        working-directory: sync-server
+        run: npm test
 
       - name: Prepare shared artwork
         shell: bash

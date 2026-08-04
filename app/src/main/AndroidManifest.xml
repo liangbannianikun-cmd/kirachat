@@ -41,6 +41,10 @@
             android:name=".ui.BackupRestoreActivity"
             android:screenOrientation="unspecified" />
         <activity
+            android:name=".ui.SyncSettingsActivity"
+            android:screenOrientation="unspecified"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.CharacterProfileActivity"
             android:screenOrientation="unspecified" />
         <activity

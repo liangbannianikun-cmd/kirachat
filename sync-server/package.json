@@ -1,0 +1,14 @@
+{
+  "name": "kirachat-sync-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-hosted encrypted snapshot sync for KiraChat clients.",
+  "engines": {
+    "node": ">=20.12.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

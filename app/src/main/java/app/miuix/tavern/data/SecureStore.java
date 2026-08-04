@@ -26,6 +26,8 @@ public final class SecureStore {
     private static final String COPILOT_LOGIN = "copilot_login";
     private static final String REALTIME_CREDENTIAL_PREFIX = "realtime_credential_";
     private static final String POINTS_ACCESS_TOKEN = "points_access_token";
+    private static final String SYNC_TOKEN = "sync_token";
+    private static final String SYNC_ENCRYPTION_PASSWORD = "sync_encryption_password";
 
     private final SharedPreferences prefs;
 
@@ -121,6 +123,22 @@ public final class SecureStore {
 
     public String getPointsAccessToken() {
         return get(POINTS_ACCESS_TOKEN);
+    }
+
+    public void setSyncToken(String value) {
+        put(SYNC_TOKEN, value);
+    }
+
+    public String getSyncToken() {
+        return get(SYNC_TOKEN);
+    }
+
+    public void setSyncEncryptionPassword(String value) {
+        put(SYNC_ENCRYPTION_PASSWORD, value);
+    }
+
+    public String getSyncEncryptionPassword() {
+        return get(SYNC_ENCRYPTION_PASSWORD);
     }
 
     private static String realtimeKey(String provider) {
