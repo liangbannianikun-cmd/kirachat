@@ -62,6 +62,12 @@ test("health, auth, versioning, and conflict protection", async () => {
     });
     assert.equal(response.status, 409);
     assert.equal((await response.json()).currentRevision, 1);
+
+    response = await fetch(`${app.baseURL}/v1/sync/snapshot`, {
+      method: "PUT", headers, body: JSON.stringify({ ...upload, baseRevision: 1 })
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).revision, 2);
   } finally {
     await app.close();
   }
