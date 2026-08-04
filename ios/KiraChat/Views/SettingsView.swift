@@ -127,7 +127,7 @@ private struct SyncSettingsView: View {
 
     var body: some View {
         Form {
-            Section("服务器连接") {
+            Section {
                 TextField("https://sync.example.com", text: $serverURL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -148,11 +148,13 @@ private struct SyncSettingsView: View {
                     Button("保存设置") { _ = saveConfiguration(showSuccess: true) }
                         .disabled(busy)
                 }
+            } header: {
+                Text("服务器连接")
             } footer: {
                 Text("连接自部署的澄语同步服务器，在设备间自动同步角色、群聊、消息、头像、背景和普通设置。")
             }
 
-            Section("同步操作") {
+            Section {
                 Button {
                     runSync(.automatic)
                 } label: {
@@ -171,6 +173,8 @@ private struct SyncSettingsView: View {
                     Label("下载服务器", systemImage: "arrow.down.circle")
                 }
                 .disabled(busy)
+            } header: {
+                Text("同步操作")
             } footer: {
                 Text("首次连接或发生冲突时，请明确选择保留本机内容或服务器内容。正常情况下“立即同步”会自动判断上传或下载。")
             }
