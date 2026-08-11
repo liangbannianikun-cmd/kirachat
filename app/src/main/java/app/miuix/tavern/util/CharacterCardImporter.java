@@ -22,7 +22,6 @@ public final class CharacterCardImporter {
             new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
     private static final int MAX_CARD_FILE_BYTES = 48 * 1024 * 1024;
     private static final int MAX_JSON_BYTES = 16 * 1024 * 1024;
-    private static final int MAX_METADATA_CHUNK_BYTES = 24 * 1024 * 1024;
     private static final int MAX_WORLD_BOOK_BYTES = 8 * 1024 * 1024;
     private static final int MAX_WORLD_BOOK_ENTRIES = 1_000_000;
 
@@ -84,9 +83,6 @@ public final class CharacterCardImporter {
                 offset += length + 12;
                 continue;
             }
-            if (length > MAX_METADATA_CHUNK_BYTES) {
-                throw new IOException("PNG 角色卡元数据不能超过 24 MB");
-            }
             byte[] data = new byte[length];
             System.arraycopy(bytes, offset + 8, data, 0, length);
 
@@ -117,9 +113,6 @@ public final class CharacterCardImporter {
 
     private static String decodeJson(String encoded) throws IOException {
         String clean = encoded == null ? "" : encoded.trim();
-        if (clean.length() > MAX_METADATA_CHUNK_BYTES) {
-            throw new IOException("PNG 角色卡元数据不能超过 24 MB");
-        }
         final byte[] decoded;
         try {
             decoded = Base64.decode(clean, Base64.DEFAULT);
@@ -165,7 +158,7 @@ public final class CharacterCardImporter {
                 new ByteArrayInputStream(data, separator + 2, data.length - separator - 2);
         return new String(readAll(
                 new InflaterInputStream(compressed),
-                MAX_METADATA_CHUNK_BYTES), StandardCharsets.ISO_8859_1);
+                MAX_CARD_FILE_BYTES), StandardCharsets.ISO_8859_1);
     }
 
     private static String readInternationalTextChunk(
@@ -192,7 +185,7 @@ public final class CharacterCardImporter {
         if (compressed) {
             text = readAll(
                     new InflaterInputStream(new ByteArrayInputStream(text)),
-                    MAX_METADATA_CHUNK_BYTES);
+                    MAX_CARD_FILE_BYTES);
         }
         return new String(text, StandardCharsets.UTF_8);
     }

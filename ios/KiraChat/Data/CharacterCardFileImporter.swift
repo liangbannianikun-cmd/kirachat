@@ -11,7 +11,6 @@ enum CharacterCardFileImporter {
     ]
     private static let maxCardFileBytes = 48 * 1024 * 1024
     private static let maxJSONBytes = 16 * 1024 * 1024
-    private static let maxMetadataBytes = 24 * 1024 * 1024
 
     static func load(from url: URL) throws -> Data {
         if let fileSize = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize,
@@ -63,12 +62,6 @@ enum CharacterCardFileImporter {
             let type = String(
                 data: png.subdata(in: typeStart..<(typeStart + 4)),
                 encoding: .isoLatin1) ?? ""
-            if type == "tEXt" {
-                guard length <= maxMetadataBytes else {
-                    throw KiraError.message(NSLocalizedString(
-                        "PNG 角色卡元数据不能超过 24 MB", comment: ""))
-                }
-            }
             if type == "tEXt",
                let field = textField(png.subdata(in: payloadStart..<payloadEnd)) {
                 if field.keyword == "ccv3" {
@@ -99,10 +92,6 @@ enum CharacterCardFileImporter {
         _ encoded: String,
         keyword: String
     ) throws -> Data {
-        guard encoded.utf8.count <= maxMetadataBytes else {
-            throw KiraError.message(NSLocalizedString(
-                "PNG 角色卡元数据不能超过 24 MB", comment: ""))
-        }
         guard let decoded = Data(
             base64Encoded: encoded.trimmingCharacters(in: .whitespacesAndNewlines),
             options: .ignoreUnknownCharacters),
