@@ -119,8 +119,8 @@ public final class CharacterCardImporter {
         } catch (IllegalArgumentException error) {
             throw new IOException("PNG 角色卡元数据不是有效的 Base64", error);
         }
-        if (decoded.length == 0 || decoded.length > MAX_JSON_BYTES) {
-            throw new IOException("PNG 内嵌角色卡 JSON 不能超过 16 MB");
+        if (decoded.length == 0) {
+            throw new IOException("PNG 角色卡元数据不是有效的 Base64");
         }
         return new String(decoded, StandardCharsets.UTF_8);
     }

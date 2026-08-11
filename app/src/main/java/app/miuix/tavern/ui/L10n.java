@@ -657,9 +657,6 @@ public final class L10n {
         add("JSON 角色卡不能超过 16 MB",
                 "JSON character cards cannot exceed 16 MB",
                 "JSONキャラクターカードは16 MB以下にしてください");
-        add("PNG 内嵌角色卡 JSON 不能超过 16 MB",
-                "Embedded PNG character-card JSON cannot exceed 16 MB",
-                "PNG内のキャラクターカードJSONは16 MB以下にしてください");
         add("角色卡世界书不能超过 8 MB",
                 "Character-card lorebooks cannot exceed 8 MB",
                 "キャラクターカードの世界書は8 MB以下にしてください");

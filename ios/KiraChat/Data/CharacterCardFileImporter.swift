@@ -101,10 +101,6 @@ enum CharacterCardFileImporter {
                 format: NSLocalizedString("PNG %@ 元数据不是有效的 Base64 UTF-8 JSON", comment: ""),
                 keyword))
         }
-        guard decoded.count <= maxJSONBytes else {
-            throw KiraError.message(NSLocalizedString(
-                "PNG 内嵌角色卡 JSON 不能超过 16 MB", comment: ""))
-        }
         return decoded
     }
 
