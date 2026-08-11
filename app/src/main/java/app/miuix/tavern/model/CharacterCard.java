@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 
 public final class CharacterCard {
     public static final String BUILTIN_DOUNAI_ID = "builtin-dounai-gpt";
-    private static final int MAX_SAFE_WORLD_BOOK_CHARS = 8 * 1024 * 1024;
 
     public String id;
     public String name;
@@ -109,7 +108,6 @@ public final class CharacterCard {
 
     public int loreEntryCount() {
         if (worldBookJson == null || worldBookJson.trim().isEmpty()) return 0;
-        if (worldBookJson.length() > MAX_SAFE_WORLD_BOOK_CHARS) return 0;
         try {
             JSONObject book = new JSONObject(worldBookJson);
             JSONArray entries = book.optJSONArray("entries");

@@ -241,6 +241,5 @@
 "服务器同步内容超出安全限制" = "Server sync data exceeds safety limits";
 "角色卡文件不能超过 48 MB" = "Character card files cannot exceed 48 MB";
 "JSON 角色卡不能超过 16 MB" = "JSON character cards cannot exceed 16 MB";
-"角色卡世界书不能超过 8 MB" = "Character-card lorebooks cannot exceed 8 MB";
 "角色卡世界书不能超过 1000000 条" = "Character-card lorebooks cannot exceed 1,000,000 entries";
 "世界书内容较多，已省略屏幕预览；聊天时仍会按相关性读取。" = "This lorebook is too large for a full on-screen preview. Relevant entries are still used in chat.";

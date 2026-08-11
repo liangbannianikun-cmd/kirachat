@@ -127,7 +127,7 @@ enum APIService {
         persona: String
     ) -> String {
         let source = character.worldBookJSON
-        guard !source.isEmpty, source.utf8.count <= 8 * 1024 * 1024,
+        guard !source.isEmpty,
               let data = source.data(using: .utf8),
               let book = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let entries = book["entries"] as? [[String: Any]] else { return "" }

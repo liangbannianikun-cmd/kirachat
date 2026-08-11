@@ -260,9 +260,7 @@ struct CharacterProfileView: View {
     }
 
     private func worldBookCount(_ card: CharacterCard) -> Int {
-        guard card.worldBookJSON.utf8.prefix(8 * 1024 * 1024 + 1).count
-                <= 8 * 1024 * 1024,
-              let data = card.worldBookJSON.data(using: .utf8),
+        guard let data = card.worldBookJSON.data(using: .utf8),
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let entries = root["entries"] as? [Any] else { return 0 }
         return entries.count

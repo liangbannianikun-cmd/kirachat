@@ -51,14 +51,6 @@ struct BackupArchive: Codable {
         guard messageCount <= 200_000 else {
             throw KiraError.message(NSLocalizedString("备份消息数量超出安全限制", comment: ""))
         }
-        guard payload.characters.allSatisfy({
-            $0.worldBookJSON.utf8.prefix(8 * 1024 * 1024 + 1).count
-                <= 8 * 1024 * 1024
-        }) else {
-            throw KiraError.message(NSLocalizedString(
-                "角色卡世界书不能超过 8 MB", comment: ""))
-        }
-
         var assetBytes = payload.settings.personaAvatarData?.count ?? 0
         guard (payload.settings.personaAvatarData?.count ?? 0) <= 20 * 1024 * 1024 else {
             throw KiraError.message(NSLocalizedString("备份中的单个图片不能超过 20 MB", comment: ""))

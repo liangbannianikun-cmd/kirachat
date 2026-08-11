@@ -436,12 +436,6 @@ public final class LocalStore {
         boolean includesDounai = false;
         for (int i = 0; i < characterArray.length(); i++) {
             JSONObject value = new JSONObject(characterArray.getJSONObject(i).toString());
-            String worldBook = value.optString("worldBookJson", "");
-            if (worldBook.length() > 8 * 1024 * 1024
-                    || worldBook.getBytes(java.nio.charset.StandardCharsets.UTF_8).length
-                    > 8 * 1024 * 1024) {
-                throw new IOException("角色卡世界书不能超过 8 MB");
-            }
             restoreAssetPath(value, "avatarPath", "avatarAsset", restoredAssets);
             restoreAssetPath(value, "chatBackgroundPath", "chatBackgroundAsset", restoredAssets);
             CharacterCard card = CharacterCard.fromJson(value);

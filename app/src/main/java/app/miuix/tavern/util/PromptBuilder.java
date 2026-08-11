@@ -15,7 +15,6 @@ import java.util.TimeZone;
 import java.text.SimpleDateFormat;
 
 public final class PromptBuilder {
-    private static final int MAX_WORLD_BOOK_CHARS = 8 * 1024 * 1024;
     private static final int MAX_WORLD_BOOK_ENTRIES = 1_000_000;
     private static final int MAX_MATCHED_LORE_CHARS = 24_000;
 
@@ -80,7 +79,6 @@ public final class PromptBuilder {
 
     private static String matchingLore(CharacterCard card, List<ChatMessage> history, String persona) {
         if (card.worldBookJson == null || card.worldBookJson.trim().isEmpty()) return "";
-        if (card.worldBookJson.length() > MAX_WORLD_BOOK_CHARS) return "";
         StringBuilder haystack = new StringBuilder();
         int start = Math.max(0, history.size() - 8);
         for (int i = start; i < history.size(); i++) {

@@ -542,10 +542,6 @@ final class AppStore: ObservableObject {
                     "角色卡世界书不能超过 1000000 条", comment: ""))
             }
             let bookData = try JSONSerialization.data(withJSONObject: book)
-            guard bookData.count <= 8 * 1024 * 1024 else {
-                throw KiraError.message(NSLocalizedString(
-                    "角色卡世界书不能超过 8 MB", comment: ""))
-            }
             if let bookText = String(data: bookData, encoding: .utf8) {
                 card.worldBookJSON = bookText
             }

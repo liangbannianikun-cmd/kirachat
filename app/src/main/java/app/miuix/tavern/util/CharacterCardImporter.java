@@ -22,7 +22,6 @@ public final class CharacterCardImporter {
             new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
     private static final int MAX_CARD_FILE_BYTES = 48 * 1024 * 1024;
     private static final int MAX_JSON_BYTES = 16 * 1024 * 1024;
-    private static final int MAX_WORLD_BOOK_BYTES = 8 * 1024 * 1024;
     private static final int MAX_WORLD_BOOK_ENTRIES = 1_000_000;
 
     public static final class Result {
@@ -129,10 +128,6 @@ public final class CharacterCardImporter {
             throws IOException, JSONException {
         String json = card.worldBookJson == null ? "" : card.worldBookJson;
         if (json.isEmpty()) return;
-        if (json.length() > MAX_WORLD_BOOK_BYTES
-                || json.getBytes(StandardCharsets.UTF_8).length > MAX_WORLD_BOOK_BYTES) {
-            throw new IOException("角色卡世界书不能超过 8 MB");
-        }
         JSONArray entries = new JSONObject(json).optJSONArray("entries");
         if (entries != null && entries.length() > MAX_WORLD_BOOK_ENTRIES) {
             throw new IOException("角色卡世界书不能超过 1000000 条");
