@@ -10,6 +10,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -53,6 +55,7 @@ import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 public final class ChatActivity extends AppCompatActivity implements MessageAdapter.Listener {
     public static final String EXTRA_CHARACTER_ID = "character_id";
@@ -83,6 +86,11 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
     private boolean queuedUserMessages;
     private long generationEpoch;
     private ChatMessage pendingAssistant;
+    private boolean autonomousGeneration;
+    private final Handler autonomousHandler =
+            new Handler(Looper.getMainLooper());
+    private final Random autonomousRandom = new Random();
+    private final Runnable autonomousRunnable = this::maybeStartAutonomousMessage;
 
     @Override
     public void finish() {
@@ -316,19 +324,25 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
     }
 
     private void startGeneration() {
+        startGeneration(false);
+    }
+
+    private void startGeneration(boolean spontaneous) {
         if (generating) return;
+        autonomousHandler.removeCallbacks(autonomousRunnable);
         AppConfig config = store.getConfig();
         pendingAssistant = new ChatMessage(ChatMessage.ASSISTANT, "");
         assistantIndex = -1;
         assistantInsertIndex = messages.size();
         long epoch = ++generationEpoch;
         generating = true;
+        autonomousGeneration = spontaneous;
         connectionLabel.setText(character.name + "正在输入…");
         connectionLabel.setVisibility(View.VISIBLE);
         updateSendButton();
 
         JSONArray prompt = PromptBuilder.build(character, config,
-                new ArrayList<>(messages));
+                new ArrayList<>(messages), spontaneous);
         activeCall = ApiClient.generate(this, config, secureStore,
                 secureStore.getDirectApiKey(),
                 prompt, new ApiClient.StreamCallback() {
@@ -365,6 +379,8 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
 
     private void finishGeneration(long epoch, @Nullable String error) {
         if (epoch != generationEpoch || !generating) return;
+        boolean spontaneous = autonomousGeneration;
+        autonomousGeneration = false;
         generating = false;
         activeCall = null;
         ChatMessage completed = null;
@@ -372,27 +388,37 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
                 ? messages.get(assistantIndex) : pendingAssistant;
         if (assistant != null) {
             if (error != null) {
-                assistant.failed = true;
-                if (assistant.content.trim().isEmpty()) {
-                    assistant.content = "请求失败：" + error;
-                } else {
-                    assistant.content += "\n\n请求中断：" + error;
+                if (!spontaneous || !assistant.content.trim().isEmpty()) {
+                    assistant.failed = true;
+                    if (assistant.content.trim().isEmpty()) {
+                        assistant.content = "请求失败：" + error;
+                    } else {
+                        assistant.content += "\n\n请求中断：" + error;
+                    }
+                    if (assistantIndex < 0) {
+                        assistantIndex = Math.max(0,
+                                Math.min(assistantInsertIndex, messages.size()));
+                        messages.add(assistantIndex, assistant);
+                        adapter.notifyItemInserted(assistantIndex);
+                    } else {
+                        adapter.notifyItemChanged(assistantIndex);
+                    }
                 }
-                if (assistantIndex < 0) {
+            } else if (assistant.content.trim().isEmpty()) {
+                if (!spontaneous) {
+                    assistant.failed = true;
+                    assistant.content = "服务没有返回文字内容";
                     assistantIndex = Math.max(0,
                             Math.min(assistantInsertIndex, messages.size()));
                     messages.add(assistantIndex, assistant);
                     adapter.notifyItemInserted(assistantIndex);
-                } else {
-                    adapter.notifyItemChanged(assistantIndex);
                 }
-            } else if (assistant.content.trim().isEmpty()) {
-                assistant.failed = true;
-                assistant.content = "服务没有返回文字内容";
-                assistantIndex = Math.max(0,
-                        Math.min(assistantInsertIndex, messages.size()));
-                messages.add(assistantIndex, assistant);
-                adapter.notifyItemInserted(assistantIndex);
+            } else if (spontaneous
+                    && PromptBuilder.shouldSkipSpontaneousOutput(assistant.content)) {
+                if (assistantIndex >= 0 && assistantIndex < messages.size()) {
+                    messages.remove(assistantIndex);
+                    adapter.notifyItemRemoved(assistantIndex);
+                }
             } else {
                 completed = assistant;
             }
@@ -408,6 +434,7 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
         updateSendButton();
         scrollToBottom(false);
         if (continueForQueuedMessages) startGeneration();
+        else scheduleAutonomousMessage();
     }
 
     private void stopGeneration() {
@@ -429,9 +456,11 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
         assistantInsertIndex = -1;
         queuedUserMessages = false;
         pendingAssistant = null;
+        autonomousGeneration = false;
         store.saveMessages(character.id, messages);
         connectionLabel.setVisibility(View.GONE);
         updateSendButton();
+        scheduleAutonomousMessage();
     }
 
     private void updateSendButton() {
@@ -698,6 +727,7 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
     }
 
     private void addUserMessage(ChatMessage message) {
+        autonomousHandler.removeCallbacks(autonomousRunnable);
         boolean generationInProgress = generating;
         messages.add(message);
         adapter.notifyItemInserted(messages.size() - 1);
@@ -708,6 +738,29 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
         } else {
             startGeneration();
         }
+    }
+
+    private void scheduleAutonomousMessage() {
+        autonomousHandler.removeCallbacks(autonomousRunnable);
+        if (!chatVisible || store == null
+                || !store.getConfig().characterAutonomousMessages) {
+            return;
+        }
+        long delay = 60_000L + autonomousRandom.nextInt(90_001);
+        autonomousHandler.postDelayed(autonomousRunnable, delay);
+    }
+
+    private void maybeStartAutonomousMessage() {
+        if (!chatVisible || store == null
+                || !store.getConfig().characterAutonomousMessages) {
+            return;
+        }
+        if (generating || (composer != null
+                && !composer.getText().toString().trim().isEmpty())) {
+            scheduleAutonomousMessage();
+            return;
+        }
+        startGeneration(true);
     }
 
     private void addVoiceCallRecord(long durationSeconds) {
@@ -814,17 +867,20 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
         if (connectionLabel != null && !generating) {
             connectionLabel.setVisibility(View.GONE);
         }
+        scheduleAutonomousMessage();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         chatVisible = true;
+        scheduleAutonomousMessage();
     }
 
     @Override
     protected void onStop() {
         chatVisible = false;
+        autonomousHandler.removeCallbacks(autonomousRunnable);
         super.onStop();
     }
 
@@ -864,6 +920,7 @@ public final class ChatActivity extends AppCompatActivity implements MessageAdap
 
     @Override
     protected void onDestroy() {
+        autonomousHandler.removeCallbacks(autonomousRunnable);
         if (isFinishing() && activeCall != null) activeCall.cancel();
         super.onDestroy();
     }

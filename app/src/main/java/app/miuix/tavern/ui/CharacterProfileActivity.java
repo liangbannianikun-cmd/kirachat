@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import app.miuix.tavern.data.LocalStore;
 import app.miuix.tavern.model.CharacterCard;
 import app.miuix.tavern.model.ChatMessage;
+import app.miuix.tavern.util.CharacterCardImporter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,6 +37,7 @@ public final class CharacterProfileActivity extends AppCompatActivity {
     public static final String EXTRA_CHARACTER_ID = "character_id";
     private static final int REQUEST_AVATAR = 4204;
     private static final int REQUEST_VOICE_CALL = 4205;
+    private static final int REQUEST_REPLACE_CARD = 4206;
     private static final long MAX_AVATAR_BYTES = 15L * 1024L * 1024L;
 
     private static final int ACTION_BLUE = Color.rgb(87, 107, 149);
@@ -302,13 +304,17 @@ public final class CharacterProfileActivity extends AppCompatActivity {
     private void showMoreMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
         menu.getMenu().add(0, 1, 0, L10n.tr(this, "更换头像"));
-        menu.getMenu().add(0, 2, 1, L10n.tr(this, "发消息"));
-        menu.getMenu().add(0, 3, 2, L10n.tr(this, "语音通话"));
-        menu.getMenu().add(0, 4, 3, L10n.tr(this, "查看完整设定"));
-        menu.getMenu().add(0, 5, 4, L10n.tr(this, "清空聊天记录"));
-        menu.getMenu().add(0, 6, 5, L10n.tr(this, "删除角色"));
+        if (!character.isBuiltIn()) {
+            menu.getMenu().add(0, 7, 1, L10n.tr(this, "更换角色卡"));
+        }
+        menu.getMenu().add(0, 2, 2, L10n.tr(this, "发消息"));
+        menu.getMenu().add(0, 3, 3, L10n.tr(this, "语音通话"));
+        menu.getMenu().add(0, 4, 4, L10n.tr(this, "查看完整设定"));
+        menu.getMenu().add(0, 5, 5, L10n.tr(this, "清空聊天记录"));
+        menu.getMenu().add(0, 6, 6, L10n.tr(this, "删除角色"));
         menu.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == 1) chooseAvatar();
+            else if (item.getItemId() == 7) chooseReplacementCard();
             else if (item.getItemId() == 2) openChat();
             else if (item.getItemId() == 3) openVoiceCall();
             else if (item.getItemId() == 4) showCharacterInfo();
@@ -352,6 +358,16 @@ public final class CharacterProfileActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_AVATAR);
     }
 
+    private void chooseReplacementCard() {
+        if (character.isBuiltIn()) return;
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES,
+                new String[]{"application/json", "image/png"});
+        startActivityForResult(intent, REQUEST_REPLACE_CARD);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -359,6 +375,16 @@ public final class CharacterProfileActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK && data != null) {
                 addVoiceCallRecord(data.getLongExtra(
                         VoiceCallActivity.EXTRA_CALL_DURATION_SECONDS, 0));
+            }
+            return;
+        }
+        if (requestCode == REQUEST_REPLACE_CARD) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                Uri selected = data.getData();
+                LocalizedToast.makeText(
+                        this, "正在读取新角色卡…", Toast.LENGTH_SHORT).show();
+                new Thread(() -> readReplacementCard(selected),
+                        "character-card-replacement").start();
             }
             return;
         }
@@ -371,6 +397,105 @@ public final class CharacterProfileActivity extends AppCompatActivity {
         Uri selected = data.getData();
         LocalizedToast.makeText(this, "正在更新头像…", Toast.LENGTH_SHORT).show();
         new Thread(() -> copyAvatar(selected), "avatar-import").start();
+    }
+
+    private void readReplacementCard(Uri selected) {
+        try (InputStream input = getContentResolver().openInputStream(selected)) {
+            if (input == null) throw new IllegalStateException("无法打开所选文件");
+            CharacterCardImporter.Result result = CharacterCardImporter.parse(input);
+            runOnUiThread(() -> confirmCardReplacement(result));
+        } catch (Exception error) {
+            String message = TextUtils.isEmpty(error.getMessage())
+                    ? "无法读取角色卡" : error.getMessage();
+            runOnUiThread(() -> LocalizedToast.makeText(
+                    this,
+                    L10n.tr(this, "更换角色卡失败") + "：" + message,
+                    Toast.LENGTH_LONG).show());
+        }
+    }
+
+    private void confirmCardReplacement(CharacterCardImporter.Result result) {
+        if (isFinishing() || character == null) return;
+        CharacterCard conflict = null;
+        String incomingName = result.card.name == null ? "" : result.card.name.trim();
+        for (CharacterCard saved : store.getCharacters()) {
+            String savedName = saved.name == null ? "" : saved.name.trim();
+            if (!saved.id.equals(character.id)
+                    && incomingName.equalsIgnoreCase(savedName)) {
+                conflict = saved;
+                break;
+            }
+        }
+        String finalName = conflict == null ? incomingName : character.name;
+        if (TextUtils.isEmpty(finalName)) finalName = character.name;
+        String message = L10n.tr(this,
+                "新角色卡将替换当前设定和头像；聊天记录、群聊成员、免打扰、置顶和聊天背景会保留。")
+                + "\n\n" + character.name + " → " + finalName;
+        if (conflict != null) {
+            message += "\n\n" + L10n.tr(this,
+                    "新角色卡名称与现有角色重复，因此将继续使用当前角色名称。");
+        }
+        String replacementName = finalName;
+        new LocalizedAlertDialogBuilder(this)
+                .setTitle("更换角色卡？")
+                .setMessage(message)
+                .setNegativeButton("取消", null)
+                .setPositiveButton("更换", (dialog, which) -> {
+                    LocalizedToast.makeText(
+                            this, "正在更换角色卡…", Toast.LENGTH_SHORT).show();
+                    new Thread(() -> replaceCharacterCard(result, replacementName),
+                            "character-card-replacement-save").start();
+                })
+                .show();
+    }
+
+    private void replaceCharacterCard(
+            CharacterCardImporter.Result result,
+            String replacementName) {
+        try {
+            CharacterCard existing = store.getCharacter(character.id);
+            if (existing == null) throw new IllegalStateException("角色不存在");
+            CharacterCard updated = result.card;
+            updated.id = existing.id;
+            updated.name = replacementName;
+            updated.lastUsed = existing.lastUsed;
+            updated.unread = existing.unread;
+            updated.muted = existing.muted;
+            updated.pinned = existing.pinned;
+            updated.chatBackgroundPath = existing.chatBackgroundPath;
+            if (TextUtils.isEmpty(updated.sourceAvatar)) {
+                updated.sourceAvatar = existing.sourceAvatar;
+            }
+            if (result.png) {
+                File directory = new File(getFilesDir(), "avatars");
+                if (!directory.isDirectory() && !directory.mkdirs()) {
+                    throw new IllegalStateException("无法创建头像目录");
+                }
+                File avatar = new File(directory,
+                        Integer.toHexString(existing.id.hashCode())
+                                + "-card-" + System.currentTimeMillis() + ".png");
+                try (FileOutputStream output = new FileOutputStream(avatar, false)) {
+                    output.write(result.originalBytes);
+                }
+                updated.avatarPath = avatar.getAbsolutePath();
+            } else {
+                updated.avatarPath = existing.avatarPath;
+            }
+            store.upsertCharacter(updated);
+            runOnUiThread(() -> {
+                character = updated;
+                setContentView(buildContent());
+                LocalizedToast.makeText(
+                        this, "角色卡已更换", Toast.LENGTH_SHORT).show();
+            });
+        } catch (Exception error) {
+            String message = TextUtils.isEmpty(error.getMessage())
+                    ? "无法保存角色卡" : error.getMessage();
+            runOnUiThread(() -> LocalizedToast.makeText(
+                    this,
+                    L10n.tr(this, "更换角色卡失败") + "：" + message,
+                    Toast.LENGTH_LONG).show());
+        }
     }
 
     private void addVoiceCallRecord(long durationSeconds) {

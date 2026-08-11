@@ -11,7 +11,8 @@ enum AccountAPIService {
         history: [ChatMessage],
         settings: AppSettings,
         accessToken: String,
-        groupDecision: Bool = false
+        groupDecision: Bool = false,
+        spontaneous: Bool = false
     ) async throws -> String {
         let model = settings.gptModel.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !model.isEmpty else {
@@ -20,7 +21,8 @@ enum AccountAPIService {
         let instructions = APIService.systemPrompt(
             character: character,
             settings: settings,
-            groupDecision: groupDecision)
+            groupDecision: groupDecision,
+            spontaneous: spontaneous)
         var body: [String: Any] = [
             "model": model,
             "input": history.suffix(60).map(responsesMessage),

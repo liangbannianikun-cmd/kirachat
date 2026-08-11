@@ -12,6 +12,7 @@ struct ChatView: View {
     @State private var cameraImage: UIImage?
     @State private var showInfo = false
     @State private var callCharacter: CharacterCard?
+    @State private var autonomousTask: Task<Void, Never>?
     @StateObject private var locationProvider = LocationProvider()
     @FocusState private var composerFocused: Bool
 
@@ -58,7 +59,14 @@ struct ChatView: View {
             VoiceCallView(target: target, character: character)
                 .environmentObject(store)
         }
-        .onAppear { store.touch(target) }
+        .onAppear {
+            store.touch(target)
+            startAutonomousLoop()
+        }
+        .onDisappear {
+            autonomousTask?.cancel()
+            autonomousTask = nil
+        }
         .onChange(of: photoItem) { item in
             guard let item else { return }
             Task {
@@ -186,6 +194,27 @@ struct ChatView: View {
         guard !text.isEmpty else { return }
         composer = ""
         store.submit(ChatMessage(role: .user, content: text), to: target)
+    }
+
+    private func startAutonomousLoop() {
+        autonomousTask?.cancel()
+        guard case .character = target else { return }
+        autonomousTask = Task { @MainActor in
+            while !Task.isCancelled {
+                let delay = UInt64(Int.random(in: 60...150)) * 1_000_000_000
+                do {
+                    try await Task.sleep(nanoseconds: delay)
+                } catch {
+                    return
+                }
+                guard store.settings.characterAutonomousMessages,
+                      !store.isGenerating(target),
+                      composer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    continue
+                }
+                store.generateAutonomousMessage(to: target)
+            }
+        }
     }
 
     private func sendImage(_ original: Data) {

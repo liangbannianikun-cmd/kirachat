@@ -170,6 +170,7 @@ struct AppSettings: Codable, Equatable {
     var personaAvatarData: Data?
     var webSearch = true
     var showReasoning = false
+    var characterAutonomousMessages = true
     var groupAutonomousMessages = true
 
     var activeModel: String {
@@ -182,7 +183,7 @@ struct AppSettings: Codable, Equatable {
         case accountProvider, gptModel, copilotModel
         case copilotEndpoint, githubOAuthClientID
         case persona, personaAvatarData, webSearch, showReasoning
-        case groupAutonomousMessages
+        case characterAutonomousMessages, groupAutonomousMessages
     }
 
     init() {}
@@ -213,6 +214,8 @@ struct AppSettings: Codable, Equatable {
             Bool.self, forKey: .webSearch) ?? true
         showReasoning = try values.decodeIfPresent(
             Bool.self, forKey: .showReasoning) ?? false
+        characterAutonomousMessages = try values.decodeIfPresent(
+            Bool.self, forKey: .characterAutonomousMessages) ?? true
         groupAutonomousMessages = try values.decodeIfPresent(
             Bool.self, forKey: .groupAutonomousMessages) ?? true
     }

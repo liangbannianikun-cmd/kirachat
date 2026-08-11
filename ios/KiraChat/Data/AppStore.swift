@@ -192,6 +192,7 @@ final class AppStore: ObservableObject {
                 personaAvatarData: settings.personaAvatarData,
                 webSearch: settings.webSearch,
                 showReasoning: settings.showReasoning,
+                characterAutonomousMessages: settings.characterAutonomousMessages,
                 groupAutonomousMessages: settings.groupAutonomousMessages))
         try payload.validate()
         let encoder = JSONEncoder()
@@ -268,6 +269,8 @@ final class AppStore: ObservableObject {
         restoredSettings.personaAvatarData = payload.settings.personaAvatarData
         restoredSettings.webSearch = payload.settings.webSearch
         restoredSettings.showReasoning = payload.settings.showReasoning
+        restoredSettings.characterAutonomousMessages =
+            payload.settings.characterAutonomousMessages
         restoredSettings.groupAutonomousMessages = payload.settings.groupAutonomousMessages
 
         isLoading = true
@@ -393,6 +396,36 @@ final class AppStore: ObservableObject {
         }
     }
 
+    func generateAutonomousMessage(to target: ConversationTarget) {
+        guard settings.characterAutonomousMessages,
+              !isGenerating(target),
+              case .character(let characterID) = target,
+              let card = character(id: characterID) else { return }
+        let history = messages(for: target)
+        let config = settings
+        beginGeneration(target.conversationID)
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let credential = try await self.generationCredential(for: config)
+                let reply = try await Self.completeReply(
+                    character: card,
+                    history: history,
+                    settings: config,
+                    credential: credential,
+                    spontaneous: true)
+                if !Self.shouldSkipAutonomousReply(reply) {
+                    self.addMessage(
+                        ChatMessage(role: .assistant, content: reply),
+                        to: target)
+                }
+            } catch {
+                // Autonomous messages are optional; avoid adding failure bubbles.
+            }
+            self.endGeneration(target.conversationID)
+        }
+    }
+
     func addCharacter(_ card: CharacterCard) {
         var value = card
         value.lastUsed = Date()
@@ -415,6 +448,7 @@ final class AppStore: ObservableObject {
         value.muted = old.muted
         value.pinned = old.pinned
         value.chatBackgroundData = old.chatBackgroundData
+        if value.avatarData == nil { value.avatarData = old.avatarData }
         characters[index] = value
         save()
     }
@@ -660,7 +694,8 @@ final class AppStore: ObservableObject {
         history: [ChatMessage],
         settings: AppSettings,
         credential: GenerationCredential,
-        groupDecision: Bool = false
+        groupDecision: Bool = false,
+        spontaneous: Bool = false
     ) async throws -> String {
         switch credential {
         case .direct(let key):
@@ -669,22 +704,37 @@ final class AppStore: ObservableObject {
                 history: history,
                 settings: settings,
                 apiKey: key,
-                groupDecision: groupDecision)
+                groupDecision: groupDecision,
+                spontaneous: spontaneous)
         case .gpt(let token):
             return try await AccountAPIService.completeGPT(
                 character: character,
                 history: history,
                 settings: settings,
                 accessToken: token,
-                groupDecision: groupDecision)
+                groupDecision: groupDecision,
+                spontaneous: spontaneous)
         case .copilot(let token):
             return try await APIService.complete(
                 character: character,
                 history: history,
                 settings: copilotSettings(from: settings),
                 apiKey: token,
-                groupDecision: groupDecision)
+                groupDecision: groupDecision,
+                spontaneous: spontaneous)
         }
+    }
+
+    nonisolated private static func shouldSkipAutonomousReply(_ value: String) -> Bool {
+        let normalized = value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "`", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .uppercased()
+        return normalized.isEmpty
+            || normalized == "[SKIP]"
+            || normalized == "[[SKIP]]"
+            || normalized == "SKIP"
     }
 
     nonisolated private static func copilotSettings(from source: AppSettings) -> AppSettings {

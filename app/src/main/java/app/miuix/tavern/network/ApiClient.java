@@ -902,6 +902,7 @@ public final class ApiClient {
         config.model = source.copilotModel;
         config.showReasoning = source.showReasoning;
         config.webSearch = source.webSearch;
+        config.characterAutonomousMessages = source.characterAutonomousMessages;
         config.groupAutonomousMessages = source.groupAutonomousMessages;
         return config;
     }

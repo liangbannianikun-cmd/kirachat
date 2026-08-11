@@ -82,6 +82,7 @@ public final class SyncPayloadCodec {
                 .put("persona", config.persona)
                 .put("webSearch", config.webSearch)
                 .put("showReasoning", config.showReasoning)
+                .put("characterAutonomousMessages", config.characterAutonomousMessages)
                 .put("groupAutonomousMessages", config.groupAutonomousMessages);
         putFile(settings, "personaAvatarData", config.personaAvatarPath, assetBytes);
 
@@ -220,6 +221,8 @@ public final class SyncPayloadCodec {
         config.put("persona", sourceSettings.optString("persona", config.optString("persona", "你")))
                 .put("webSearch", sourceSettings.optBoolean("webSearch", true))
                 .put("showReasoning", sourceSettings.optBoolean("showReasoning", false))
+                .put("characterAutonomousMessages",
+                        sourceSettings.optBoolean("characterAutonomousMessages", true))
                 .put("groupAutonomousMessages",
                         sourceSettings.optBoolean("groupAutonomousMessages", true))
                 .put("personaAvatarPath", "");

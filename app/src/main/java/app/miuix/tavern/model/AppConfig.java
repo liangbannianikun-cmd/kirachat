@@ -42,6 +42,7 @@ public final class AppConfig {
     public boolean reduceTransparency;
     public boolean showReasoning;
     public boolean webSearch = true;
+    public boolean characterAutonomousMessages = true;
     public boolean groupAutonomousMessages = true;
 
     public JSONObject toJson() throws JSONException {
@@ -69,6 +70,7 @@ public final class AppConfig {
                 .put("reduceTransparency", reduceTransparency)
                 .put("showReasoning", showReasoning)
                 .put("webSearch", webSearch)
+                .put("characterAutonomousMessages", characterAutonomousMessages)
                 .put("groupAutonomousMessages", groupAutonomousMessages);
     }
 
@@ -132,6 +134,8 @@ public final class AppConfig {
         config.reduceTransparency = object.optBoolean("reduceTransparency", false);
         config.showReasoning = object.optBoolean("showReasoning", false);
         config.webSearch = object.optBoolean("webSearch", true);
+        config.characterAutonomousMessages =
+                object.optBoolean("characterAutonomousMessages", true);
         config.groupAutonomousMessages =
                 object.optBoolean("groupAutonomousMessages", true);
         return config;

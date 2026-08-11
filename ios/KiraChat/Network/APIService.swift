@@ -6,7 +6,8 @@ enum APIService {
         history: [ChatMessage],
         settings: AppSettings,
         apiKey: String,
-        groupDecision: Bool = false
+        groupDecision: Bool = false,
+        spontaneous: Bool = false
     ) async throws -> String {
         let model = settings.model.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !model.isEmpty else {
@@ -15,7 +16,8 @@ enum APIService {
         let system = systemPrompt(
             character: character,
             settings: settings,
-            groupDecision: groupDecision)
+            groupDecision: groupDecision,
+            spontaneous: spontaneous)
         let request: URLRequest
         switch settings.apiFormat {
         case .chatCompletions:
@@ -85,7 +87,8 @@ enum APIService {
     static func systemPrompt(
         character: CharacterCard,
         settings: AppSettings,
-        groupDecision: Bool
+        groupDecision: Bool,
+        spontaneous: Bool = false
     ) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale.current
@@ -105,6 +108,9 @@ enum APIService {
         }
         if groupDecision {
             sections.append("这是群聊。只在话题与你相关、你被点名或你确实能推进对话时回复；否则只输出 [SKIP]。不要替其他成员说话。")
+        }
+        if spontaneous {
+            sections.append("现在是单聊暂时空闲的时刻。请根据角色性格、当前情境、最近对话和当前时间，自然地主动发起一条简短的新消息；不要假装用户刚刚说过不存在的话。如果此刻不适合主动说话，只输出精确文本 [SKIP]，不要解释原因。")
         }
         return sections.filter { !$0.isEmpty }.joined(separator: "\n\n")
     }

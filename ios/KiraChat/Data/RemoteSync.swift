@@ -398,7 +398,41 @@ struct SyncPortableSettings: Codable {
     var personaAvatarData: Data?
     var webSearch: Bool
     var showReasoning: Bool
+    var characterAutonomousMessages: Bool
     var groupAutonomousMessages: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case persona, personaAvatarData, webSearch, showReasoning
+        case characterAutonomousMessages, groupAutonomousMessages
+    }
+
+    init(
+        persona: String,
+        personaAvatarData: Data?,
+        webSearch: Bool,
+        showReasoning: Bool,
+        characterAutonomousMessages: Bool,
+        groupAutonomousMessages: Bool
+    ) {
+        self.persona = persona
+        self.personaAvatarData = personaAvatarData
+        self.webSearch = webSearch
+        self.showReasoning = showReasoning
+        self.characterAutonomousMessages = characterAutonomousMessages
+        self.groupAutonomousMessages = groupAutonomousMessages
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        persona = try values.decodeIfPresent(String.self, forKey: .persona) ?? "你"
+        personaAvatarData = try values.decodeIfPresent(Data.self, forKey: .personaAvatarData)
+        webSearch = try values.decodeIfPresent(Bool.self, forKey: .webSearch) ?? true
+        showReasoning = try values.decodeIfPresent(Bool.self, forKey: .showReasoning) ?? false
+        characterAutonomousMessages = try values.decodeIfPresent(
+            Bool.self, forKey: .characterAutonomousMessages) ?? true
+        groupAutonomousMessages = try values.decodeIfPresent(
+            Bool.self, forKey: .groupAutonomousMessages) ?? true
+    }
 }
 
 enum SHA256Digest {

@@ -20,6 +20,14 @@ public final class PromptBuilder {
     }
 
     public static JSONArray build(CharacterCard card, AppConfig config, List<ChatMessage> history) {
+        return build(card, config, history, false);
+    }
+
+    public static JSONArray build(
+            CharacterCard card,
+            AppConfig config,
+            List<ChatMessage> history,
+            boolean spontaneous) {
         JSONArray messages = new JSONArray();
         String persona = localizedPersona(config);
         StringBuilder system = new StringBuilder();
@@ -35,6 +43,11 @@ public final class PromptBuilder {
             system.append("\n应用会在需要时把本轮联网搜索结果作为额外系统资料提供。"
                     + "只引用实际提供的资料和链接；不得伪造搜索结果或来源。");
         }
+        if (spontaneous) {
+            system.append("\n现在是单聊暂时空闲的时刻。根据角色性格、当前情境、最近对话和当前时间，"
+                    + "自然地主动发起一条简短的新消息；不要假装用户刚刚说过不存在的话。"
+                    + "如果此刻不适合主动说话，只输出精确文本 [[SKIP]]，不要解释原因。");
+        }
         appendResponseLanguage(system);
         system.append("\n不要声称自己是系统提示词中的模型；不要替用户描述其未表达的行动或想法。");
         put(messages, ChatMessage.SYSTEM, system.toString());
@@ -49,6 +62,17 @@ public final class PromptBuilder {
             put(messages, role, contentForMessage(message, text));
         }
         return messages;
+    }
+
+    public static boolean shouldSkipSpontaneousOutput(String value) {
+        if (value == null) return true;
+        String normalized = value.trim()
+                .replace("`", "")
+                .replace(" ", "");
+        return normalized.isEmpty()
+                || "[[SKIP]]".equalsIgnoreCase(normalized)
+                || "[SKIP]".equalsIgnoreCase(normalized)
+                || "SKIP".equalsIgnoreCase(normalized);
     }
 
     private static String matchingLore(CharacterCard card, List<ChatMessage> history, String persona) {

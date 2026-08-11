@@ -291,6 +291,10 @@ public final class L10n {
         add("群聊空闲时，角色会偶尔自行发起话题",
                 "Characters occasionally start a topic while the group is idle",
                 "グループが空いている時、キャラクターが時々自分から話題を始めます");
+        add("单聊主动消息", "Spontaneous direct messages", "個別チャットで自発的に発言");
+        add("单聊空闲时，角色会偶尔自然地发起一条新消息",
+                "The character occasionally starts a natural new message while the chat is idle",
+                "個別チャットが空いている時、キャラクターが時々自然に新しいメッセージを送ります");
         add("显示模型思考过程", "Show model reasoning", "モデルの思考過程を表示");
         add("默认关闭；过滤 reasoning_content、reasoning 等内部推理字段",
                 "Off by default; filters internal fields such as reasoning_content and reasoning.",
@@ -504,6 +508,19 @@ public final class L10n {
         add("请输入角色名称", "Enter a character name", "キャラクター名を入力してください");
         add("该名称已存在，请换一个名称", "That name already exists. Choose another.", "その名前は既に使用されています。別の名前を入力してください。");
         add("正在读取角色卡…", "Reading character card…", "キャラクターカードを読み込み中…");
+        add("更换角色卡", "Replace character card", "キャラクターカードを変更");
+        add("更换角色卡？", "Replace character card?", "キャラクターカードを変更しますか？");
+        add("更换", "Replace", "変更");
+        add("正在读取新角色卡…", "Reading the new character card…", "新しいキャラクターカードを読み込み中…");
+        add("正在更换角色卡…", "Replacing character card…", "キャラクターカードを変更中…");
+        add("角色卡已更换", "Character card replaced", "キャラクターカードを変更しました");
+        add("更换角色卡失败", "Failed to replace character card", "キャラクターカードを変更できませんでした");
+        add("新角色卡将替换当前设定和头像；聊天记录、群聊成员、免打扰、置顶和聊天背景会保留。",
+                "The new card replaces the current definition and avatar. Chat history, group membership, mute, pin, and chat background are preserved.",
+                "新しいカードで現在の設定とアバターを置き換えます。チャット履歴、グループ参加、通知オフ、ピン留め、背景は保持されます。");
+        add("新角色卡名称与现有角色重复，因此将继续使用当前角色名称。",
+                "The new card name matches another character, so the current character name will be kept.",
+                "新しいカード名が既存のキャラクターと重複しているため、現在の名前を維持します。");
         add("正在导入角色…", "Importing character…", "キャラクターをインポート中…");
         add("正在覆盖角色…", "Replacing character…", "キャラクターを上書き中…");
         add("正在更换头像…", "Changing avatar…", "アバターを変更中…");

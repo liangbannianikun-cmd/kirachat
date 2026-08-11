@@ -1,5 +1,6 @@
 import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct CharactersView: View {
     @EnvironmentObject private var store: AppStore
@@ -58,6 +59,9 @@ struct CharacterProfileView: View {
     @State private var avatarItem: PhotosPickerItem?
     @State private var showDefinition = false
     @State private var confirmDelete = false
+    @State private var showCardImporter = false
+    @State private var replacementError = ""
+    @State private var pendingReplacement: CharacterCard?
 
     private var card: CharacterCard? { store.character(id: characterID) }
 
@@ -81,6 +85,9 @@ struct CharacterProfileView: View {
                                 showDefinition = true
                             }
                             if !card.isBuiltIn {
+                                Button("更换角色卡", systemImage: "arrow.triangle.2.circlepath") {
+                                    showCardImporter = true
+                                }
                                 Button("删除角色", systemImage: "trash", role: .destructive) {
                                     confirmDelete = true
                                 }
@@ -120,6 +127,25 @@ struct CharacterProfileView: View {
                 } message: {
                     Text("角色卡和单聊记录会从本机删除；不足两人的群聊也会解散。")
                 }
+                .fileImporter(
+                    isPresented: $showCardImporter,
+                    allowedContentTypes: [.json],
+                    allowsMultipleSelection: false) { result in
+                        importReplacement(result)
+                    }
+                .sheet(item: $pendingReplacement) { imported in
+                    ReplaceCharacterCardView(
+                        existingID: characterID,
+                        imported: imported)
+                        .environmentObject(store)
+                }
+                .alert("更换角色卡失败", isPresented: Binding(
+                    get: { !replacementError.isEmpty },
+                    set: { if !$0 { replacementError = "" } })) {
+                    Button("好", role: .cancel) { replacementError = "" }
+                } message: {
+                    Text(replacementError)
+                }
             } else {
                 EmptyState(
                     systemImage: "person.crop.circle.badge.questionmark",
@@ -136,6 +162,17 @@ struct CharacterProfileView: View {
                 updated.avatarData = data
                 store.updateCharacter(updated)
             }
+        }
+    }
+
+    private func importReplacement(_ result: Result<[URL], Error>) {
+        do {
+            guard let url = try result.get().first else { return }
+            let accessed = url.startAccessingSecurityScopedResource()
+            defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+            pendingReplacement = try store.importTavernJSON(Data(contentsOf: url))
+        } catch {
+            replacementError = error.localizedDescription
         }
     }
 
@@ -226,6 +263,70 @@ struct CharacterProfileView: View {
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let entries = root["entries"] as? [Any] else { return 0 }
         return entries.count
+    }
+}
+
+private struct ReplaceCharacterCardView: View {
+    @EnvironmentObject private var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let existingID: String
+    let imported: CharacterCard
+
+    private var existing: CharacterCard? { store.character(id: existingID) }
+
+    private var conflict: CharacterCard? {
+        store.characters.first {
+            $0.id != existingID
+                && $0.name.caseInsensitiveCompare(imported.name) == .orderedSame
+        }
+    }
+
+    private var replacementName: String {
+        conflict == nil ? imported.name : (existing?.name ?? imported.name)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("新角色卡") {
+                    LabeledContent("当前角色", value: existing?.name ?? "角色")
+                    LabeledContent("更换为", value: replacementName)
+                    if !imported.description.isEmpty {
+                        Text(imported.description)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(5)
+                    }
+                }
+                if conflict != nil {
+                    Section {
+                        Text("新角色卡名称与现有角色重复，因此将继续使用当前角色名称。")
+                            .foregroundStyle(.orange)
+                    }
+                }
+                Section {
+                    Text("新角色卡将替换当前设定和头像；聊天记录、群聊成员、免打扰、置顶和聊天背景会保留。")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("更换角色卡")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("更换") {
+                        var value = imported
+                        value.name = replacementName
+                        store.overwriteCharacter(existingID: existingID, with: value)
+                        dismiss()
+                    }
+                    .disabled(existing == nil)
+                }
+            }
+        }
     }
 }
 

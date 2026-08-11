@@ -451,6 +451,7 @@ struct APISettingsView: View {
             Section("能力") {
                 Toggle("联网搜索", isOn: settingBinding(\.webSearch))
                 Toggle("显示模型思考过程", isOn: settingBinding(\.showReasoning))
+                Toggle("单聊主动消息", isOn: settingBinding(\.characterAutonomousMessages))
                 Toggle("群聊主动发言", isOn: settingBinding(\.groupAutonomousMessages))
             }
 

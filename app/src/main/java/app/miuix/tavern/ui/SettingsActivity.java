@@ -71,6 +71,7 @@ public final class SettingsActivity extends AppCompatActivity {
     private EditText realtimeExtra;
     private SwitchCompat reasoningSwitch;
     private SwitchCompat webSearchSwitch;
+    private SwitchCompat characterAutonomousSwitch;
     private SwitchCompat groupAutonomousSwitch;
 
     private TextView directModelStatus;
@@ -209,6 +210,32 @@ public final class SettingsActivity extends AppCompatActivity {
         webSearchRow.addView(webSearchSwitch, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, MiuixUi.dp(this, 48)));
         connection.addView(webSearchRow, bodyParams(9, 0));
+        LinearLayout characterAutonomousRow = MiuixUi.horizontal(this);
+        characterAutonomousRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout characterAutonomousLabels = MiuixUi.vertical(this);
+        characterAutonomousLabels.addView(MiuixUi.text(
+                this, "单聊主动消息", 15, MiuixUi.TEXT_PRIMARY, true));
+        TextView characterAutonomousDetail = MiuixUi.text(
+                this,
+                "单聊空闲时，角色会偶尔自然地发起一条新消息",
+                12.5f,
+                MiuixUi.TEXT_SECONDARY,
+                false);
+        characterAutonomousDetail.setMaxLines(2);
+        characterAutonomousLabels.addView(characterAutonomousDetail);
+        characterAutonomousRow.addView(characterAutonomousLabels,
+                new LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        characterAutonomousSwitch = new SwitchCompat(this);
+        characterAutonomousSwitch.setChecked(config.characterAutonomousMessages);
+        characterAutonomousSwitch.setShowText(false);
+        characterAutonomousSwitch.setContentDescription(
+                L10n.tr(this, "单聊主动消息"));
+        characterAutonomousRow.addView(characterAutonomousSwitch,
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, MiuixUi.dp(this, 48)));
+        connection.addView(characterAutonomousRow, bodyParams(9, 0));
+
         LinearLayout autonomousRow = MiuixUi.horizontal(this);
         autonomousRow.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout autonomousLabels = MiuixUi.vertical(this);
@@ -1264,6 +1291,8 @@ public final class SettingsActivity extends AppCompatActivity {
                 && reasoningSwitch.isChecked();
         config.webSearch = webSearchSwitch != null
                 && webSearchSwitch.isChecked();
+        config.characterAutonomousMessages = characterAutonomousSwitch == null
+                || characterAutonomousSwitch.isChecked();
         config.groupAutonomousMessages = groupAutonomousSwitch == null
                 || groupAutonomousSwitch.isChecked();
         if (config.baseUrl.isEmpty()) config.baseUrl = "https://api.openai.com/v1";
