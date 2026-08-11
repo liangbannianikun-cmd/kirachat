@@ -320,6 +320,13 @@ struct SyncPayload: Codable {
               messages.values.reduce(0, { $0 + $1.count }) <= 200_000 else {
             throw KiraError.message(NSLocalizedString("服务器同步内容超出安全限制", comment: ""))
         }
+        guard characters.allSatisfy({
+            $0.worldBookJSON.utf8.prefix(8 * 1024 * 1024 + 1).count
+                <= 8 * 1024 * 1024
+        }) else {
+            throw KiraError.message(NSLocalizedString(
+                "角色卡世界书不能超过 8 MB", comment: ""))
+        }
         var assetBytes = settings.personaAvatarData?.count ?? 0
         for card in characters {
             assetBytes += card.avatarData?.count ?? 0

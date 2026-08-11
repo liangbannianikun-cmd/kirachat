@@ -509,6 +509,13 @@ final class AppStore: ObservableObject {
         save()
     }
 
+    func importTavernCard(_ data: Data) throws -> CharacterCard {
+        let payload = try CharacterCardFileImporter.decode(data)
+        var card = try importTavernJSON(payload.json)
+        if let avatar = payload.avatarPNG { card.avatarData = avatar }
+        return card
+    }
+
     func importTavernJSON(_ data: Data) throws -> CharacterCard {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw KiraError.message(NSLocalizedString("角色卡 JSON 无效", comment: ""))
@@ -527,10 +534,21 @@ final class AppStore: ObservableObject {
         card.exampleDialogue = value("mes_example")
         card.creatorNotes = value("creator_notes", fallback: value("creatorcomment"))
         if let book = source["character_book"],
-           JSONSerialization.isValidJSONObject(book),
-           let bookData = try? JSONSerialization.data(withJSONObject: book),
-           let bookText = String(data: bookData, encoding: .utf8) {
-            card.worldBookJSON = bookText
+           JSONSerialization.isValidJSONObject(book) {
+            if let dictionary = book as? [String: Any],
+               let entries = dictionary["entries"] as? [Any],
+               entries.count > 1_000_000 {
+                throw KiraError.message(NSLocalizedString(
+                    "角色卡世界书不能超过 1000000 条", comment: ""))
+            }
+            let bookData = try JSONSerialization.data(withJSONObject: book)
+            guard bookData.count <= 8 * 1024 * 1024 else {
+                throw KiraError.message(NSLocalizedString(
+                    "角色卡世界书不能超过 8 MB", comment: ""))
+            }
+            if let bookText = String(data: bookData, encoding: .utf8) {
+                card.worldBookJSON = bookText
+            }
         }
         return card
     }

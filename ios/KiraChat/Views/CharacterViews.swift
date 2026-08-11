@@ -129,7 +129,7 @@ struct CharacterProfileView: View {
                 }
                 .fileImporter(
                     isPresented: $showCardImporter,
-                    allowedContentTypes: [.json],
+                    allowedContentTypes: [.json, .png],
                     allowsMultipleSelection: false) { result in
                         importReplacement(result)
                     }
@@ -170,7 +170,8 @@ struct CharacterProfileView: View {
             guard let url = try result.get().first else { return }
             let accessed = url.startAccessingSecurityScopedResource()
             defer { if accessed { url.stopAccessingSecurityScopedResource() } }
-            pendingReplacement = try store.importTavernJSON(Data(contentsOf: url))
+            pendingReplacement = try store.importTavernCard(
+                CharacterCardFileImporter.load(from: url))
         } catch {
             replacementError = error.localizedDescription
         }
@@ -259,7 +260,9 @@ struct CharacterProfileView: View {
     }
 
     private func worldBookCount(_ card: CharacterCard) -> Int {
-        guard let data = card.worldBookJSON.data(using: .utf8),
+        guard card.worldBookJSON.utf8.prefix(8 * 1024 * 1024 + 1).count
+                <= 8 * 1024 * 1024,
+              let data = card.worldBookJSON.data(using: .utf8),
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let entries = root["entries"] as? [Any] else { return 0 }
         return entries.count
@@ -371,7 +374,7 @@ struct WorldbooksView: View {
                 List(linked) { card in
                     NavigationLink {
                         ScrollView {
-                            Text(card.worldBookJSON)
+                            Text(preview(card.worldBookJSON))
                                 .font(.system(.footnote, design: .monospaced))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding()
@@ -393,5 +396,18 @@ struct WorldbooksView: View {
         }
         .navigationTitle("世界书")
         .navigationBarTitleDisplayMode(.large)
+    }
+
+    private func preview(_ value: String) -> String {
+        let limit = 32_000
+        guard let end = value.index(
+            value.startIndex,
+            offsetBy: limit,
+            limitedBy: value.endIndex),
+              end != value.endIndex else { return value }
+        let note = NSLocalizedString(
+            "世界书内容较多，已省略屏幕预览；聊天时仍会按相关性读取。",
+            comment: "")
+        return String(value[..<end]) + "\n\n[\(note)]"
     }
 }

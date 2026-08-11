@@ -8,7 +8,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -16,6 +15,10 @@ import java.util.TimeZone;
 import java.text.SimpleDateFormat;
 
 public final class PromptBuilder {
+    private static final int MAX_WORLD_BOOK_CHARS = 8 * 1024 * 1024;
+    private static final int MAX_WORLD_BOOK_ENTRIES = 1_000_000;
+    private static final int MAX_MATCHED_LORE_CHARS = 24_000;
+
     private PromptBuilder() {
     }
 
@@ -77,24 +80,30 @@ public final class PromptBuilder {
 
     private static String matchingLore(CharacterCard card, List<ChatMessage> history, String persona) {
         if (card.worldBookJson == null || card.worldBookJson.trim().isEmpty()) return "";
+        if (card.worldBookJson.length() > MAX_WORLD_BOOK_CHARS) return "";
         StringBuilder haystack = new StringBuilder();
         int start = Math.max(0, history.size() - 8);
         for (int i = start; i < history.size(); i++) {
             haystack.append(history.get(i).content).append('\n');
         }
         String lower = haystack.toString().toLowerCase(Locale.ROOT);
-        List<String> matched = new ArrayList<>();
+        StringBuilder result = new StringBuilder();
         try {
             JSONObject book = new JSONObject(card.worldBookJson);
             JSONArray entries = book.optJSONArray("entries");
             if (entries == null) return "";
-            for (int i = 0; i < entries.length() && matched.size() < 6; i++) {
+            int limit = Math.min(entries.length(), MAX_WORLD_BOOK_ENTRIES);
+            for (int i = 0; i < limit; i++) {
                 JSONObject entry = entries.optJSONObject(i);
                 if (entry == null || !entry.optBoolean("enabled", true)) continue;
                 JSONArray keys = entry.optJSONArray("keys");
                 if (keys == null) keys = entry.optJSONArray("key");
                 boolean always = entry.optBoolean("constant", false);
                 boolean hit = always;
+                if (keys == null) {
+                    String keyword = entry.optString("key", "").trim().toLowerCase(Locale.ROOT);
+                    hit = hit || (!keyword.isEmpty() && lower.contains(keyword));
+                }
                 if (keys != null) {
                     for (int k = 0; k < keys.length(); k++) {
                         String keyword = keys.optString(k, "").trim().toLowerCase(Locale.ROOT);
@@ -106,15 +115,22 @@ public final class PromptBuilder {
                 }
                 if (hit) {
                     String content = entry.optString("content", "").trim();
-                    if (!content.isEmpty()) matched.add(card.replaceMacros(content, persona));
+                    if (content.isEmpty()) continue;
+                    String expanded = card.replaceMacros(content, persona);
+                    int remaining = MAX_MATCHED_LORE_CHARS - result.length();
+                    if (remaining <= 3) break;
+                    if (result.length() > 0) result.append('\n');
+                    result.append("- ");
+                    remaining = MAX_MATCHED_LORE_CHARS - result.length();
+                    if (expanded.length() <= remaining) {
+                        result.append(expanded);
+                    } else {
+                        result.append(expanded, 0, remaining);
+                        break;
+                    }
                 }
             }
-        } catch (JSONException ignored) {
-        }
-        StringBuilder result = new StringBuilder();
-        for (String item : matched) {
-            if (result.length() > 0) result.append("\n");
-            result.append("- ").append(item);
+        } catch (JSONException | OutOfMemoryError ignored) {
         }
         return result.toString();
     }

@@ -647,13 +647,34 @@ public final class L10n {
         add("0.9.0 · 原生角色聊天客户端",
                 "0.9.0 · Native character chat client",
                 "0.9.0 · ネイティブキャラクターチャット");
-        add("导入 Tavern V2 角色卡时，内嵌的 character_book 会一并保存。每次生成前只选择命中关键词的条目，避免把整本设定塞进提示词。",
-                "Embedded character_book data is saved when importing Tavern V2 cards. Before each reply, only entries matching recent keywords are selected.",
-                "Tavern V2カードのインポート時に、埋め込みのcharacter_bookも保存します。返信前には最近のキーワードに一致する項目だけを選択します。");
+        add("导入 Tavern V2/V3 角色卡时，内嵌的 character_book 会一并保存。每次生成前只选择命中关键词的条目，避免把整本设定塞进提示词。",
+                "Embedded character_book data is saved when importing Tavern V2/V3 cards. Before each reply, only entries matching recent keywords are selected.",
+                "Tavern V2/V3カードのインポート時に、埋め込みのcharacter_bookも保存します。返信前には最近のキーワードに一致する項目だけを選択します。");
         add("微信式信息架构负责熟悉感；MIUIX 的大标题、分组卡片与圆角负责层级；按下即反馈和可中断弹簧负责触感。所有动效都会尊重系统“移除动画”设置。",
                 "A familiar WeChat-style structure is paired with MIUIX titles, grouped cards, rounded hierarchy, immediate press feedback, and interruptible spring motion. System reduced-motion settings are respected.",
                 "WeChat風の分かりやすい構成に、MIUIXの大見出し、グループカード、角丸、即時の押下フィードバック、割り込み可能なスプリング動作を組み合わせています。システムの視差効果を減らす設定にも対応します。");
         add("导入失败：", "Import failed: ", "インポート失敗：");
+        add("JSON 角色卡不能超过 16 MB",
+                "JSON character cards cannot exceed 16 MB",
+                "JSONキャラクターカードは16 MB以下にしてください");
+        add("PNG 角色卡元数据不能超过 24 MB",
+                "PNG character-card metadata cannot exceed 24 MB",
+                "PNGキャラクターカードのメタデータは24 MB以下にしてください");
+        add("PNG 内嵌角色卡 JSON 不能超过 16 MB",
+                "Embedded PNG character-card JSON cannot exceed 16 MB",
+                "PNG内のキャラクターカードJSONは16 MB以下にしてください");
+        add("角色卡世界书不能超过 8 MB",
+                "Character-card lorebooks cannot exceed 8 MB",
+                "キャラクターカードの世界書は8 MB以下にしてください");
+        add("角色卡世界书不能超过 1000000 条",
+                "Character-card lorebooks cannot exceed 1,000,000 entries",
+                "キャラクターカードの世界書は1,000,000件以下にしてください");
+        add("角色卡文件过大，无法安全导入",
+                "The character card is too large to import safely",
+                "キャラクターカードが大きすぎるため安全にインポートできません");
+        add("角色卡内容过多，无法在当前设备上安全导入",
+                "This character card contains too much data for this device to import safely",
+                "この端末では安全にインポートできない量のデータが含まれています");
         add("更换失败：", "Change failed: ", "変更失敗：");
         add("连接失败：", "Connection failed: ", "接続失敗：");
         add("登录失败：", "Sign-in failed: ", "ログイン失敗：");

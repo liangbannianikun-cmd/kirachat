@@ -28,6 +28,7 @@ public final class SyncPayloadCodec {
     public static final int MAX_PAYLOAD_BYTES = 180 * 1024 * 1024;
     private static final int MAX_ASSET_BYTES = 20 * 1024 * 1024;
     private static final long MAX_TOTAL_ASSET_BYTES = 128L * 1024L * 1024L;
+    private static final int MAX_WORLD_BOOK_BYTES = 8 * 1024 * 1024;
 
     private SyncPayloadCodec() {
     }
@@ -36,6 +37,8 @@ public final class SyncPayloadCodec {
         long[] assetBytes = {0L};
         JSONArray characters = new JSONArray();
         for (CharacterCard card : store.getCharacters()) {
+            String worldBook = card.worldBookJson == null ? "" : card.worldBookJson;
+            validateWorldBookSize(worldBook);
             JSONObject value = new JSONObject()
                     .put("id", card.id)
                     .put("name", card.name)
@@ -45,7 +48,7 @@ public final class SyncPayloadCodec {
                     .put("firstMessage", card.firstMessage)
                     .put("exampleDialogue", card.exampleDialogue)
                     .put("creatorNotes", card.creatorNotes)
-                    .put("worldBookJSON", card.worldBookJson)
+                    .put("worldBookJSON", worldBook)
                     .put("lastUsed", card.lastUsed)
                     .put("unread", card.unread)
                     .put("muted", card.muted)
@@ -130,6 +133,8 @@ public final class SyncPayloadCodec {
             if (id.isEmpty() || name.isEmpty() || !characterIds.add(id)) {
                 throw new IOException("同步内容包含重复或无效角色");
             }
+            String worldBook = source.optString("worldBookJSON", "");
+            validateWorldBookSize(worldBook);
             JSONObject value = new JSONObject()
                     .put("id", id)
                     .put("name", name)
@@ -139,7 +144,7 @@ public final class SyncPayloadCodec {
                     .put("firstMessage", source.optString("firstMessage", ""))
                     .put("exampleDialogue", source.optString("exampleDialogue", ""))
                     .put("creatorNotes", source.optString("creatorNotes", ""))
-                    .put("worldBookJson", source.optString("worldBookJSON", ""))
+                    .put("worldBookJson", worldBook)
                     .put("lastUsed", source.optLong("lastUsed", System.currentTimeMillis()))
                     .put("unread", source.optInt("unread", 0))
                     .put("muted", source.optBoolean("muted", false))
@@ -238,6 +243,14 @@ public final class SyncPayloadCodec {
                 .put("config", config)
                 .put("assets", assets);
         store.restoreBackup(backup);
+    }
+
+    private static void validateWorldBookSize(String value) throws IOException {
+        String worldBook = value == null ? "" : value;
+        if (worldBook.length() > MAX_WORLD_BOOK_BYTES
+                || worldBook.getBytes(StandardCharsets.UTF_8).length > MAX_WORLD_BOOK_BYTES) {
+            throw new IOException("角色卡世界书不能超过 8 MB");
+        }
     }
 
     private static JSONArray encodeMessages(List<ChatMessage> source, long[] assetBytes)

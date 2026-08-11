@@ -197,7 +197,7 @@ struct MessagesView: View {
         }
         .fileImporter(
             isPresented: $showImporter,
-            allowedContentTypes: [.json],
+            allowedContentTypes: [.json, .png],
             allowsMultipleSelection: false) { result in
                 importCharacter(result)
             }
@@ -225,7 +225,8 @@ struct MessagesView: View {
             guard let url = try result.get().first else { return }
             let accessed = url.startAccessingSecurityScopedResource()
             defer { if accessed { url.stopAccessingSecurityScopedResource() } }
-            let card = try store.importTavernJSON(Data(contentsOf: url))
+            let card = try store.importTavernCard(
+                CharacterCardFileImporter.load(from: url))
             duplicateCard = store.matchingCharacter(named: card.name)
             pendingImportedCard = card
         } catch {

@@ -45,6 +45,7 @@ public final class CharacterProfileActivity extends AppCompatActivity {
 
     private LocalStore store;
     private CharacterCard character;
+    private int displayedLoreEntryCount;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,6 +64,7 @@ public final class CharacterProfileActivity extends AppCompatActivity {
     }
 
     private View buildContent() {
+        displayedLoreEntryCount = character.loreEntryCount();
         LinearLayout root = MiuixUi.vertical(this);
         root.setBackgroundColor(MiuixUi.chatBackground(this));
         root.addView(buildToolbar(), new LinearLayout.LayoutParams(
@@ -92,11 +94,11 @@ public final class CharacterProfileActivity extends AppCompatActivity {
         page.addView(divider(18));
         page.addView(detailRow(
                 "世界书",
-                character.loreEntryCount() > 0
-                        ? character.loreEntryCount() + " 条条目"
+                displayedLoreEntryCount > 0
+                        ? displayedLoreEntryCount + " 条条目"
                         : "未关联",
-                character.loreEntryCount() > 0,
-                character.loreEntryCount() > 0 ? v -> showWorldBookSummary() : null));
+                displayedLoreEntryCount > 0,
+                displayedLoreEntryCount > 0 ? v -> showWorldBookSummary() : null));
         page.addView(divider(18));
         page.addView(detailRow(
                 "创作者备注", preview(displayText(character.creatorNotes), "暂无备注"), true,
@@ -188,7 +190,7 @@ public final class CharacterProfileActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         addMeta(details, "来源：" + sourceLabel());
-        addMeta(details, "世界书：" + character.loreEntryCount() + " 条");
+        addMeta(details, "世界书：" + displayedLoreEntryCount + " 条");
         addMeta(details, "最近聊天：" + DateFormat.format(
                 "yyyy-MM-dd HH:mm", new Date(character.lastUsed)));
         return header;
@@ -409,7 +411,8 @@ public final class CharacterProfileActivity extends AppCompatActivity {
                     ? "无法读取角色卡" : error.getMessage();
             runOnUiThread(() -> LocalizedToast.makeText(
                     this,
-                    L10n.tr(this, "更换角色卡失败") + "：" + message,
+                    L10n.tr(this, "更换角色卡失败") + "："
+                            + L10n.tr(this, message),
                     Toast.LENGTH_LONG).show());
         }
     }
@@ -570,8 +573,8 @@ public final class CharacterProfileActivity extends AppCompatActivity {
         appendSection(detail, "性格", displayText(character.personality));
         appendSection(detail, "场景", displayText(character.scenario));
         appendSection(detail, "示例对话", displayText(character.exampleDialogue));
-        if (character.loreEntryCount() > 0) {
-            appendSection(detail, "世界书", character.loreEntryCount() + " 条条目");
+        if (displayedLoreEntryCount > 0) {
+            appendSection(detail, "世界书", displayedLoreEntryCount + " 条条目");
         }
         if (detail.length() == 0) detail.append("这个角色还没有详细设定。");
         new LocalizedAlertDialogBuilder(this)
@@ -592,7 +595,7 @@ public final class CharacterProfileActivity extends AppCompatActivity {
     private void showWorldBookSummary() {
         showText(
                 "世界书",
-                "此角色卡包含 " + character.loreEntryCount()
+                "此角色卡包含 " + displayedLoreEntryCount
                         + " 条世界书条目。聊天时会根据最近消息自动选取相关条目。",
                 "这个角色没有关联世界书。");
     }

@@ -15,6 +15,7 @@ enum APIService {
         }
         let system = systemPrompt(
             character: character,
+            history: history,
             settings: settings,
             groupDecision: groupDecision,
             spontaneous: spontaneous)
@@ -86,6 +87,7 @@ enum APIService {
 
     static func systemPrompt(
         character: CharacterCard,
+        history: [ChatMessage],
         settings: AppSettings,
         groupDecision: Bool,
         spontaneous: Bool = false
@@ -103,8 +105,12 @@ enum APIService {
             character.exampleDialogue.isEmpty ? "" : "示例对话：\n\(character.exampleDialogue)",
             "用户名称：\(settings.persona)"
         ]
-        if !character.worldBookJSON.isEmpty {
-            sections.append("世界书：\n\(character.worldBookJSON)")
+        let lore = matchingWorldBook(
+            character: character,
+            history: history,
+            persona: settings.persona)
+        if !lore.isEmpty {
+            sections.append("相关世界书：\n\(lore)")
         }
         if groupDecision {
             sections.append("这是群聊。只在话题与你相关、你被点名或你确实能推进对话时回复；否则只输出 [SKIP]。不要替其他成员说话。")
@@ -113,6 +119,61 @@ enum APIService {
             sections.append("现在是单聊暂时空闲的时刻。请根据角色性格、当前情境、最近对话和当前时间，自然地主动发起一条简短的新消息；不要假装用户刚刚说过不存在的话。如果此刻不适合主动说话，只输出精确文本 [SKIP]，不要解释原因。")
         }
         return sections.filter { !$0.isEmpty }.joined(separator: "\n\n")
+    }
+
+    private static func matchingWorldBook(
+        character: CharacterCard,
+        history: [ChatMessage],
+        persona: String
+    ) -> String {
+        let source = character.worldBookJSON
+        guard !source.isEmpty, source.utf8.count <= 8 * 1024 * 1024,
+              let data = source.data(using: .utf8),
+              let book = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let entries = book["entries"] as? [[String: Any]] else { return "" }
+
+        let haystack = history.suffix(8)
+            .map(\.content)
+            .joined(separator: "\n")
+            .lowercased()
+        let maxEntries = min(entries.count, 1_000_000)
+        let maxCharacters = 24_000
+        var result = ""
+        for entry in entries.prefix(maxEntries) {
+            guard (entry["enabled"] as? Bool) ?? true else { continue }
+            var matched = (entry["constant"] as? Bool) ?? false
+            var keys = (entry["keys"] as? [String])
+                ?? (entry["key"] as? [String])
+                ?? []
+            if keys.isEmpty, let key = (entry["key"] as? String)
+                ?? (entry["keys"] as? String) {
+                keys = [key]
+            }
+            if !matched {
+                matched = keys.contains { key in
+                    let clean = key.trimmingCharacters(in: .whitespacesAndNewlines)
+                        .lowercased()
+                    return !clean.isEmpty && haystack.contains(clean)
+                }
+            }
+            guard matched,
+                  let content = entry["content"] as? String,
+                  !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                continue
+            }
+            let expanded = character.replacingMacros(in: content, persona: persona)
+            let prefix = result.isEmpty ? "- " : "\n- "
+            let remaining = maxCharacters - result.count - prefix.count
+            guard remaining > 0 else { break }
+            result += prefix
+            if expanded.count <= remaining {
+                result += expanded
+            } else {
+                result += String(expanded.prefix(remaining))
+                break
+            }
+        }
+        return result
     }
 
     private static func chatRequest(

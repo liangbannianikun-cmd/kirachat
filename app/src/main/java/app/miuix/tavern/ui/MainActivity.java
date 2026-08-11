@@ -331,7 +331,7 @@ public final class MainActivity extends AppCompatActivity {
         TextView title = MiuixUi.text(this, "安静地补充上下文", 18, MiuixUi.TEXT_PRIMARY, true);
         explainer.addView(title);
         TextView body = MiuixUi.text(this,
-                "导入 Tavern V2 角色卡时，内嵌的 character_book 会一并保存。每次生成前只选择命中关键词的条目，避免把整本设定塞进提示词。",
+                "导入 Tavern V2/V3 角色卡时，内嵌的 character_book 会一并保存。每次生成前只选择命中关键词的条目，避免把整本设定塞进提示词。",
                 14, MiuixUi.TEXT_SECONDARY, false);
         body.setLineSpacing(MiuixUi.dp(this, 3), 1.05f);
         LinearLayout.LayoutParams bodyParams =
@@ -669,7 +669,9 @@ public final class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> chooseCharacterImportMode(result));
             } catch (Exception error) {
                 runOnUiThread(() -> LocalizedToast.makeText(this,
-                        "导入失败：" + error.getMessage(), Toast.LENGTH_LONG).show());
+                        L10n.tr(this, "导入失败：")
+                                + L10n.tr(this, error.getMessage()),
+                        Toast.LENGTH_LONG).show());
             }
         });
     }
@@ -802,7 +804,9 @@ public final class MainActivity extends AppCompatActivity {
                 });
             } catch (Exception error) {
                 runOnUiThread(() -> LocalizedToast.makeText(this,
-                        "导入失败：" + error.getMessage(), Toast.LENGTH_LONG).show());
+                        L10n.tr(this, "导入失败：")
+                                + L10n.tr(this, error.getMessage()),
+                        Toast.LENGTH_LONG).show());
             }
         });
     }

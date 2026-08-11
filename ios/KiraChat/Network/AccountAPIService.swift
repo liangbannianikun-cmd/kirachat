@@ -20,6 +20,7 @@ enum AccountAPIService {
         }
         let instructions = APIService.systemPrompt(
             character: character,
+            history: history,
             settings: settings,
             groupDecision: groupDecision,
             spontaneous: spontaneous)
