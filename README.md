@@ -1,3 +1,5 @@
+**简体中文** · [English](README_EN.md) · [日本語](README_JA.md)
+
 # 澄语 KiraChat — 原生 Android / iOS AI 角色聊天客户端
 
 [![KiraChat](https://img.shields.io/badge/KiraChat-v0.9.0-22C55E)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0)
