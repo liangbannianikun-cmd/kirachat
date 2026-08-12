@@ -1,8 +1,80 @@
-# 澄语
+# 澄语 KiraChat — 原生 Android / iOS AI 角色聊天客户端
 
-澄语是一个面向手机和平板的原生角色聊天客户端。Android 端使用原生 View，iOS 端使用 SwiftUI；两端都没有把网页装进 WebView，而是重新实现适合触屏的角色、会话、世界书、群聊和连接流程。
+[![Release](https://img.shields.io/github/v/release/liangbannianikun-cmd/kirachat?display_name=tag&sort=semver)](https://github.com/liangbannianikun-cmd/kirachat/releases/latest)
+![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&logoColor=white)
+![Languages](https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9)
 
-## 已实现
+**把 SillyTavern 角色卡、多模型 API、本地模型和群聊带到真正适合手机使用的原生客户端。**
+
+KiraChat（澄语）不是 WebView 套壳：Android 使用原生 View，iOS 使用 SwiftUI，针对触屏重新设计了微信式消息、角色资料、世界书、群聊、语音与连接流程。
+
+## 它解决什么问题
+
+| 常见问题 | KiraChat 的处理方式 |
+| --- | --- |
+| 手机上的网页角色聊天界面操作拥挤 | 原生 Android/iOS 界面，微信式消息结构与移动端手势 |
+| 角色卡、模型和接口散落在不同工具里 | 导入 SillyTavern V1/V2/V3 JSON、PNG `chara`/`ccv3`，统一连接 GPT、Claude、Gemini 等接口 |
+| 想在手机本地聊天，不希望上传消息 | Android 可下载运行 Qwen3.5-0.8B/2B，并支持本地图片理解 |
+| 普通聊天应用没有多角色协作 | 本地创建群聊、`@角色`、关联性发言、并行生成和组合头像 |
+| 换设备后角色与聊天难迁移 | 本地备份/还原，或通过自部署服务器进行客户端加密同步 |
+
+## 立即安装
+
+| 平台 | 下载 | 安装说明 |
+| --- | --- | --- |
+| Android 8.0+ | **[下载 APK](https://github.com/liangbannianikun-cmd/kirachat/releases/download/v0.9.0/KiraChat-0.9.0-android-debug.apk)** | 当前为调试签名测试包；允许安装未知来源应用后打开 APK |
+| iOS 16+ | **[下载未签名 IPA](https://github.com/liangbannianikun-cmd/kirachat/releases/download/v0.9.0/KiraChat-0.9.0-ios-unsigned.ipa)** | 需要使用自己的证书或签名工具签名后安装 |
+
+最新版本与校验文件统一发布在 **[GitHub Releases](https://github.com/liangbannianikun-cmd/kirachat/releases/latest)**。安装或覆盖前建议先在“我的 → 备份与还原”导出数据。
+
+### 3 步开始聊天
+
+1. 打开“我的 → 连接与账户”，配置兼容 API、登录账户，或在 Android 下载本地 Qwen 模型。
+2. 回到“消息”页，点右上角 `+` 导入 JSON/PNG 角色卡。
+3. 选择角色并发送消息；有两位以上角色时，也可以直接创建本地群聊。
+
+> [!IMPORTANT]
+> GPT、Claude、Gemini、Copilot 和其他云服务的账户权限、额度与可用地区由对应厂商决定。iOS 版暂未移植 Android 的原生 Realtime WebSocket 与本地 GGUF 推理，详见下方平台说明。
+
+## 核心能力
+
+- **角色卡兼容**：SillyTavern / Character Card V1–V3 JSON、PNG `chara` 与 `ccv3`、宏替换和内嵌世界书。
+- **多模型连接**：GPT 兼容接口、OpenAI Responses、Claude Messages、Gemini、Azure OpenAI、Ollama、GPT 与 GitHub Copilot 账户模式。
+- **本地与多模态**：Android 端 Qwen3.5 本地推理、图片理解、相册、拍照、位置与联网搜索。
+- **原生群聊**：无需 SillyTavern 服务器即可创建群聊，支持 `@`、随机/并行回复和角色主动消息。
+- **移动端体验**：微信式消息与组合头像、MIUIX 视觉、深色模式、三语界面和系统通知。
+- **数据掌控**：本地持久化、备份/还原、自部署加密同步，API Key 与 OAuth 令牌不进入普通备份。
+
+## 平台支持
+
+| 能力 | Android | iOS |
+| --- | :---: | :---: |
+| 原生界面、角色卡、世界书、群聊 | ✅ | ✅ |
+| GPT / Claude / Gemini 直连 | ✅ | ✅ |
+| GPT / GitHub Copilot 账户 | ✅ | ✅ |
+| 图片、拍照、位置、联网搜索 | ✅ | ✅ |
+| Qwen3.5 GGUF 本地推理 | ✅ | — |
+| 多厂商原生 Realtime 语音 | ✅ | — |
+| 系统听写 + 当前模型 + TTS 语音对话 | ✅ | ✅ |
+| 加密服务器同步 | ✅ | ✅ |
+
+## 文档导航
+
+- [详细配置与开始聊天](#详细配置与开始聊天)
+- [服务器同步](#服务器同步)
+- [账户说明](#账户说明)
+- [Realtime 语音通话](#realtime-语音通话)
+- [直连 API 兼容基线](#直连-api-兼容基线)
+- [Qwen3.5 本地模型](#qwen35-本地模型)
+- [构建](#构建)
+- [数据与隐私](#数据与隐私)
+- [设计说明](DESIGN.md)
+
+<details>
+<summary><strong>查看完整功能清单</strong></summary>
+
+### 完整功能
 
 - 微信式四栏信息架构：消息、角色、世界书、我的；入口集中在带选中胶囊的悬浮 Dock
 - MIUIX 风格的大标题、圆角分组卡片、低对比背景和轻量层级
@@ -59,7 +131,9 @@
 - 升级时只移除旧版三个演示角色，保留用户导入的角色和既有本地群聊
 - 完整跟随系统深色模式：页面、卡片、聊天背景、气泡、输入区、弹窗与系统栏使用分层暗色表面，同时保持微信式绿色操作反馈
 
-## 安装与开始
+</details>
+
+## 详细配置与开始聊天
 
 1. 安装 APK。
 2. 在“我的 → 连接与账户”填写 API 根地址或完整请求 URL 和 API Key。接口协议默认“GPT 兼容接口”，也可选择 Responses、Claude Messages、Gemini GenerateContent、Azure OpenAI、Ollama 原生接口或自动识别。应用会按协议自动请求模型列表，也可以手动输入模型 ID；本地免鉴权接口可不填 Key。
