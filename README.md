@@ -128,7 +128,6 @@ KiraChat（澄语）不是 WebView 套壳：Android 使用原生 View，iOS 使�
 - GPT OAuth 令牌、GitHub OAuth 令牌和直连 API Key 使用 Android Keystore + AES-GCM 加密
 - 各厂商 Realtime API Key / 会话凭据分别使用 Android Keystore + AES-GCM 加密
 - 单一应用内置向导“豆乃GPT”，设定和头像随 APK 提供，资料页与角色列表明确标记“应用内置”，并指导连接、模型、角色卡、群聊和语音功能
-- 升级时只移除旧版三个演示角色，保留用户导入的角色和既有本地群聊
 - 完整跟随系统深色模式：页面、卡片、聊天背景、气泡、输入区、弹窗与系统栏使用分层暗色表面，同时保持微信式绿色操作反馈
 
 </details>
@@ -177,7 +176,7 @@ npm start
 
 ## Realtime 语音通话
 
-旧版 OpenAI 短期令牌服务已移除。“我的 → 连接与账户 → Realtime 语音”现在按厂商分别保存配置和 Keystore 加密凭据，支持以下两种接入：
+“我的 → 连接与账户 → Realtime 语音”按厂商分别保存配置和 Keystore 加密凭据，支持以下两种接入：
 
 - 原生直连：Qwen3.5 Omni Realtime、GLM-Realtime、百度 Realtime、OpenAI Realtime、Gemini Live、xAI Voice Agent、ElevenLabs ElevenAgents。
 - 实时适配器：豆包/火山 S2S-O 与 S2S-SC、TRTC AI 实时对话、MiniMax Speech 2.8 + M2.7、Amazon Nova 2 Sonic、Mistral Voxtral Realtime + LLM + Voxtral TTS。
