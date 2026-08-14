@@ -19,7 +19,6 @@ body:
         - Android
         - iOS
         - Android and iOS
-        - Kira Switch
         - Server or gateway
         - Documentation
     validations:

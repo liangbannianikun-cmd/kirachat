@@ -24,7 +24,6 @@ body:
       options:
         - Android app
         - iOS app
-        - Kira Switch
         - Sync server
         - Copilot gateway
         - Build or packaging

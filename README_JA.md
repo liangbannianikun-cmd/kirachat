@@ -75,50 +75,6 @@ KiraChat は WebView のラッパーではありません。Android はネイテ
 | システム音声入力 + 現在のモデル + TTS 音声チャット | ✅ | ✅ |
 | 暗号化サーバー同期 | ✅ | ✅ |
 
-## 関連デスクトップツール：Kira Switch
-
-**Kira Switch は KiraChat ファミリーの Windows デスクトップ用キャラクターコンソールです。** SillyTavern のキャラクターカードを 1 枚取り込み、5 種類のプロンプトファイルを手作業で探して編集することなく、Codex、Claude Code、Hermes、OpenClaw、OpenCode で同じキャラクターを利用できます。
-
-**[Kira Switch 1.0.0 Windows 版をダウンロード](https://github.com/liangbannianikun-cmd/kirachat/releases/download/kira-switch-v1.0.0/Kira-Switch-1.0.0-Windows-Portable.exe)** · [専用 Release を開く](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
-
-<details>
-<summary><strong>Kira Switch の導入、対応クライアント、安全機構を表示</strong></summary>
-
-[![Kira Switch](https://img.shields.io/badge/Kira%20Switch-v1.0.0-7C3AED)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
-![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
-
-### 30 秒で導入
-
-1. **[Kira Switch 1.0.0 Windows Portable](https://github.com/liangbannianikun-cmd/kirachat/releases/download/kira-switch-v1.0.0/Kira-Switch-1.0.0-Windows-Portable.exe)** をダウンロードします。
-2. 起動して、JSON、PNG、または CHARX キャラクターカードを取り込みます。
-3. 対象クライアントを選び、生成された指示を確認して適用します。キャラクターを読み込むには、クライアントで新しいセッションを開始してください。
-
-Node.js のインストールや API キーは不要です。現在のビルドには商用コード署名がありません。Windows SmartScreen が表示された場合は、ダウンロード URL と GitHub 上のビルド元を確認してください。
-
-![Kira Switch メイン画面](https://raw.githubusercontent.com/liangbannianikun-cmd/kirachat/kira-switch/kira-switch/docs/kira-switch-preview.png)
-
-### 対応内容
-
-- Character Card V1/V2/V3 の `.json`、`chara` / `ccv3` メタデータ入り `.png`、`card.json` を含む `.charx` を取り込みます。
-- 説明、性格、場面、最初のメッセージ、会話例、システムプロンプト、別の挨拶、世界設定を解析し、一般的なキャラクター／ユーザーマクロを置き換えます。
-- 短縮・標準・完全の 3 種類のプロンプト長を用意し、5 クライアントを個別に有効化、無効化、切り替えできます。
-- 管理対象の `KIRA-SWITCH` ブロックだけを変更し、組み込みプロンプト、既存ルール、無関係なファイル内容を保持します。
-- 書き込み前に毎回自動バックアップし、履歴から有効化前のスナップショットを復元できます。カスタム適用先にも対応します。
-- モデル、資格情報、API キー、ネットワークプロキシ、ツール権限は変更しません。第三者製カードは適用前に内容を確認してください。
-
-| クライアント | 既定ファイル | 既定の適用範囲 |
-| --- | --- | --- |
-| Codex | `~/.codex/AGENTS.md` | ローカルの全 Codex タスク |
-| Claude Code | `~/.claude/CLAUDE.md` | ユーザー全体 |
-| Hermes | `~/.hermes/SOUL.md` | Hermes のメイン人格 |
-| OpenClaw | `~/.openclaw/workspace/SOUL.md` | 既定ワークスペースの人格 |
-| OpenCode | `~/.config/opencode/AGENTS.md` | ユーザー全体 |
-
-Kira Switch と KiraChat は SillyTavern Character Card の互換方針を共有しますが、Kira Switch は独立したデスクトップツールです。**KiraChat の会話、アカウント、キーは同期しません。** ソースと開発ドキュメントは [`kira-switch` ブランチ](https://github.com/liangbannianikun-cmd/kirachat/tree/kira-switch/kira-switch)、バイナリは [Kira Switch v1.0.0 Release](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0) にあります。
-
-</details>
-
 ## ドキュメント
 
 - [セットアップ詳細](#セットアップ詳細)

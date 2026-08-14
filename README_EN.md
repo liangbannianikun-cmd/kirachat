@@ -75,50 +75,6 @@ KiraChat packages and checksums are published in the **[KiraChat v0.9.0 Release]
 | System dictation + current model + TTS voice chat | ✅ | ✅ |
 | Encrypted server sync | ✅ | ✅ |
 
-## Related desktop tool: Kira Switch
-
-**Kira Switch is the Windows desktop character console in the KiraChat family.** Import one SillyTavern card and use the same character with Codex, Claude Code, Hermes, OpenClaw, and OpenCode without manually finding and editing five different prompt files.
-
-**[Download Kira Switch 1.0.0 for Windows](https://github.com/liangbannianikun-cmd/kirachat/releases/download/kira-switch-v1.0.0/Kira-Switch-1.0.0-Windows-Portable.exe)** · [Open its separate Release](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
-
-<details>
-<summary><strong>Show Kira Switch installation, supported clients, and safety details</strong></summary>
-
-[![Kira Switch](https://img.shields.io/badge/Kira%20Switch-v1.0.0-7C3AED)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
-![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
-
-### Install in 30 seconds
-
-1. Download **[Kira Switch 1.0.0 Windows Portable](https://github.com/liangbannianikun-cmd/kirachat/releases/download/kira-switch-v1.0.0/Kira-Switch-1.0.0-Windows-Portable.exe)**.
-2. Run it and import a JSON, PNG, or CHARX character card.
-3. Select a target client, inspect the generated instructions, and inject them. Start a new client session to load the character.
-
-No Node.js installation or API key is required. The current build is not commercially code-signed. If Windows SmartScreen appears, verify the download URL and GitHub build source.
-
-![Kira Switch main window](https://raw.githubusercontent.com/liangbannianikun-cmd/kirachat/kira-switch/kira-switch/docs/kira-switch-preview.png)
-
-### Supported behavior
-
-- Imports Character Card V1/V2/V3 `.json`, `.png` with `chara`/`ccv3` metadata, and `.charx` containing `card.json`.
-- Parses descriptions, personality, scenarios, greetings, example dialogue, system prompts, alternate greetings, and lorebooks, then replaces common character/user macros.
-- Provides compact, standard, and full prompt lengths; each of the five clients can be enabled, disabled, and switched independently.
-- Modifies only managed `KIRA-SWITCH` blocks, preserving built-in prompts, existing rules, and unrelated file content.
-- Creates an automatic backup before every write, restores pre-enable snapshots from History, and supports custom injection paths.
-- Does not change models, credentials, API keys, network proxies, or tool permissions. Review third-party cards before injection.
-
-| Client | Default file | Default scope |
-| --- | --- | --- |
-| Codex | `~/.codex/AGENTS.md` | All local Codex tasks |
-| Claude Code | `~/.claude/CLAUDE.md` | User-wide |
-| Hermes | `~/.hermes/SOUL.md` | Primary Hermes identity |
-| OpenClaw | `~/.openclaw/workspace/SOUL.md` | Default workspace persona |
-| OpenCode | `~/.config/opencode/AGENTS.md` | User-wide |
-
-Kira Switch and KiraChat share the same SillyTavern Character Card compatibility direction, but Kira Switch is an independent desktop tool. **It does not synchronize KiraChat conversations, accounts, or keys.** Source and full development documentation are on the [`kira-switch` branch](https://github.com/liangbannianikun-cmd/kirachat/tree/kira-switch/kira-switch); binaries are in the [Kira Switch v1.0.0 Release](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0).
-
-</details>
-
 ## Documentation
 
 - [Detailed setup](#detailed-setup)
