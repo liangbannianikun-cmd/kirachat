@@ -1,4 +1,4 @@
-<p align="center"><a href="README.md">简体中文</a> · <strong>English</strong> · <a href="README_JA.md">日本語</a></p>
+<p align="center"><a href="README.md">简体中文</a> · <a href="README_ZH_TW.md">繁體中文</a> · <strong>English</strong> · <a href="README_JA.md">日本語</a></p>
 
 <p align="center">
   <img src="app/src/main/res/mipmap-nodpi/app_icon.png" width="112" alt="KiraChat app icon">
@@ -12,7 +12,7 @@
   <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/KiraChat-v0.9.0-22C55E" alt="KiraChat v0.9.0"></a>
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 8.0+">
   <img src="https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&amp;logoColor=white" alt="iOS 16+">
-  <img src="https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9" alt="Simplified Chinese, English, and Japanese">
+  <img src="https://img.shields.io/badge/UI-简中%20%7C%20繁中%20%7C%20English%20%7C%20日本語-5B8FF9" alt="Simplified Chinese, Traditional Chinese, English, and Japanese">
 </p>
 
 <p align="center">
@@ -59,7 +59,7 @@ KiraChat packages and checksums are published in the **[KiraChat v0.9.0 Release]
 - **Multiple model routes:** GPT-compatible APIs, OpenAI Responses, Claude Messages, Gemini, Azure OpenAI, Ollama, plus GPT and GitHub Copilot account modes.
 - **Local and multimodal:** Qwen3.5 local inference on Android, image understanding, gallery, camera, location, and web search.
 - **Native group chat:** Create groups without a SillyTavern server, with mentions, randomized/parallel replies, and autonomous character messages.
-- **Mobile experience:** WeChat-style messages and composite avatars, MIUIX visuals, dark mode, three UI languages, and system notifications.
+- **Mobile experience:** WeChat-style messages and composite avatars, MIUIX visuals, dark mode, four UI languages, and system notifications.
 - **Control of your data:** Local persistence, backup/restore, and self-hosted encrypted sync. API keys and OAuth tokens are excluded from normal backups.
 
 ## Platform support
@@ -98,7 +98,7 @@ KiraChat packages and checksums are published in the **[KiraChat v0.9.0 Release]
 - MIUIX-inspired large titles, rounded grouped cards, restrained hierarchy, dark mode, immediate press feedback, interruptible springs, and reduced-motion fallback.
 - WeChat-style direct/group bubbles, 1–9 member composite group avatars, message search, mute, pin, per-chat backgrounds, notifications, and long-press actions.
 - Users may continue sending text, images, or locations while a reply is being generated. Direct chats queue turns; groups reconsider the latest context.
-- Simplified Chinese, English, and Japanese interfaces.
+- Simplified Chinese, Traditional Chinese, English, and Japanese interfaces.
 
 ### Characters, cards, and lorebooks
 

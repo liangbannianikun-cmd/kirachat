@@ -1,5 +1,7 @@
 package app.miuix.tavern.ui;
 
+import app.miuix.tavern.util.LocaleUtils;
+
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Build;
@@ -18,6 +20,7 @@ import java.util.regex.Pattern;
 public final class L10n {
     private static final Map<String, String> EN = new LinkedHashMap<>();
     private static final Map<String, String> JA = new LinkedHashMap<>();
+    private static final Map<String, String> HANT = HantTranslations.create();
     private static final List<String> KEYS = new ArrayList<>();
     private static final Pattern MEMBER_COUNT =
             Pattern.compile("^(\\d+) 位成员$");
@@ -700,11 +703,14 @@ public final class L10n {
         if (value == null) return "";
         String source = value.toString();
         String language = language(context);
-        if (!"en".equals(language) && !"ja".equals(language)) return source;
-        Map<String, String> map = "ja".equals(language) ? JA : EN;
+        if (!"en".equals(language) && !"ja".equals(language)
+                && !"zh-Hant".equals(language)) return source;
+        Map<String, String> map = "ja".equals(language)
+                ? JA : ("zh-Hant".equals(language) ? HANT : EN);
         String exact = map.get(source);
         if (exact != null) return exact;
-        String dynamic = dynamic(source, "ja".equals(language));
+        String dynamic = "zh-Hant".equals(language)
+                ? null : dynamic(source, "ja".equals(language));
         if (dynamic != null) return dynamic;
         String translated = source;
         for (String key : KEYS) {
@@ -741,7 +747,7 @@ public final class L10n {
         } else {
             locale = configuration.locale;
         }
-        return locale == null ? "" : locale.getLanguage();
+        return LocaleUtils.languageCode(locale);
     }
 
     private static String dynamic(String source, boolean japanese) {

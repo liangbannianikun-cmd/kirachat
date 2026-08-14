@@ -1,4 +1,4 @@
-<p align="center"><strong>简体中文</strong> · <a href="README_EN.md">English</a> · <a href="README_JA.md">日本語</a></p>
+<p align="center"><strong>简体中文</strong> · <a href="README_ZH_TW.md">繁體中文</a> · <a href="README_EN.md">English</a> · <a href="README_JA.md">日本語</a></p>
 
 <p align="center">
   <img src="app/src/main/res/mipmap-nodpi/app_icon.png" width="112" alt="澄语 KiraChat 应用图标">
@@ -12,7 +12,7 @@
   <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/KiraChat-v0.9.0-22C55E" alt="KiraChat v0.9.0"></a>
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 8.0+">
   <img src="https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&amp;logoColor=white" alt="iOS 16+">
-  <img src="https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9" alt="简体中文、English、日本語">
+  <img src="https://img.shields.io/badge/UI-简中%20%7C%20繁中%20%7C%20English%20%7C%20日本語-5B8FF9" alt="简体中文、繁體中文、English、日本語">
 </p>
 
 <p align="center">
@@ -141,7 +141,7 @@ KiraChat 安装包与校验文件统一发布在 **[KiraChat v0.9.0 Release](htt
 - 模型正在回复时仍可继续发送文字、图片或位置；单聊会按消息顺序进入下一轮，群聊会基于最新上下文重新随机决策
 - 群聊成员会基于同一份最新消息同时开始判断和生成；“群聊主动发言”默认开启，空闲时角色会不定期自行发起话题
 - “单聊主动消息”可在设置中开关；开启后，停留在空闲单聊时角色会不定期自然地发起消息
-- 界面跟随系统语言，当前提供简体中文、English 与日本語
+- 界面跟随系统语言，当前提供简体中文、繁體中文、English 与日本語
 - 本地会话持久化
 - GPT OAuth 令牌、GitHub OAuth 令牌和直连 API Key 使用 Android Keystore + AES-GCM 加密
 - 各厂商 Realtime API Key / 会话凭据分别使用 Android Keystore + AES-GCM 加密

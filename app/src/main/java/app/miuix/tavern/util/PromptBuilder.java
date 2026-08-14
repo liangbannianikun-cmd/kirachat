@@ -160,11 +160,14 @@ public final class PromptBuilder {
     }
 
     static void appendResponseLanguage(StringBuilder prompt) {
-        String language = Locale.getDefault().getLanguage();
+        Locale locale = Locale.getDefault();
+        String language = locale.getLanguage();
         if ("en".equals(language)) {
             prompt.append("\nReply in English unless the user explicitly asks for another language.");
         } else if ("ja".equals(language)) {
             prompt.append("\nユーザーが明示的に別の言語を指定しない限り、日本語で返信してください。");
+        } else if (LocaleUtils.isTraditionalChinese(locale)) {
+            prompt.append("\n除非使用者明確要求其他語言，否則請以繁體中文回覆。");
         }
     }
 

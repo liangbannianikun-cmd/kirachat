@@ -4,6 +4,8 @@ import android.net.Uri;
 import android.text.Html;
 import android.util.Xml;
 
+import app.miuix.tavern.util.LocaleUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -83,7 +85,7 @@ final class WebSearchClient {
     private static List<Result> cachedSearch(
             ApiClient.Call owner,
             String query) throws Exception {
-        String key = Locale.getDefault().getLanguage() + "\n" + query;
+        String key = Locale.getDefault().toLanguageTag() + "\n" + query;
         CacheEntry cached = CACHE.get(key);
         long now = System.currentTimeMillis();
         if (cached != null && now - cached.createdAt < CACHE_MS) {
@@ -120,9 +122,11 @@ final class WebSearchClient {
     private static List<Result> searchBingRss(
             ApiClient.Call owner,
             String query) throws Exception {
-        String language = Locale.getDefault().getLanguage();
+        Locale locale = Locale.getDefault();
+        String language = locale.getLanguage();
         String setLanguage = "zh".equals(language)
-                ? "zh-hans" : ("ja".equals(language) ? "ja" : "en");
+                ? (LocaleUtils.isTraditionalChinese(locale) ? "zh-hant" : "zh-hans")
+                : ("ja".equals(language) ? "ja" : "en");
         String url = "https://www.bing.com/search?format=rss&setlang="
                 + setLanguage + "&q="
                 + URLEncoder.encode(query, StandardCharsets.UTF_8.name());
@@ -199,11 +203,13 @@ final class WebSearchClient {
     private static List<Result> searchWikipedia(
             ApiClient.Call owner,
             String query) throws Exception {
-        String language = Locale.getDefault().getLanguage();
+        Locale locale = Locale.getDefault();
+        String language = locale.getLanguage();
         if (!"zh".equals(language) && !"ja".equals(language)) language = "en";
         String url = "https://" + language
                 + ".wikipedia.org/w/api.php?action=opensearch&namespace=0&limit=5&format=json&origin=*&search="
-                + URLEncoder.encode(query, StandardCharsets.UTF_8.name());
+                + URLEncoder.encode(query, StandardCharsets.UTF_8.name())
+                + (LocaleUtils.isTraditionalChinese(locale) ? "&variant=zh-hant" : "");
         JSONArray root = new JSONArray(execute(owner, url, "application/json"));
         JSONArray titles = root.optJSONArray(1);
         JSONArray summaries = root.optJSONArray(2);

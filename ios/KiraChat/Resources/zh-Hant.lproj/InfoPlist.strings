@@ -1,0 +1,6 @@
+"CFBundleDisplayName" = "澄語";
+"NSPhotoLibraryUsageDescription" = "用於選擇聊天圖片、角色頭像和聊天背景。";
+"NSCameraUsageDescription" = "用於拍攝並傳送圖片。";
+"NSLocationWhenInUseUsageDescription" = "僅在你主動傳送位置時取得目前座標。";
+"NSMicrophoneUsageDescription" = "用於與角色進行即時語音通話。";
+"NSSpeechRecognitionUsageDescription" = "用於將你在語音通話中的發言轉換成文字並交給目前模型。";

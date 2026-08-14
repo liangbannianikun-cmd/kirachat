@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.util.Base64;
 
 import app.miuix.tavern.data.SecureStore;
+import app.miuix.tavern.util.LocaleUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -277,7 +279,9 @@ public final class CodexAuthClient {
             connection.setRequestProperty("Content-Type", contentType);
             connection.setRequestProperty("Accept", "application/json");
             connection.setRequestProperty("User-Agent", BROWSER_USER_AGENT);
-            connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
+            connection.setRequestProperty(
+                    "Accept-Language",
+                    LocaleUtils.acceptLanguage(Locale.getDefault()));
             connection.setFixedLengthStreamingMode(bytes.length);
             OutputStream output = connection.getOutputStream();
             output.write(bytes);

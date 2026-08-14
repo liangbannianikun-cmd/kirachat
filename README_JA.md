@@ -1,4 +1,4 @@
-<p align="center"><a href="README.md">简体中文</a> · <a href="README_EN.md">English</a> · <strong>日本語</strong></p>
+<p align="center"><a href="README.md">简体中文</a> · <a href="README_ZH_TW.md">繁體中文</a> · <a href="README_EN.md">English</a> · <strong>日本語</strong></p>
 
 <p align="center">
   <img src="app/src/main/res/mipmap-nodpi/app_icon.png" width="112" alt="澄語 KiraChat アプリアイコン">
@@ -12,7 +12,7 @@
   <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/KiraChat-v0.9.0-22C55E" alt="KiraChat v0.9.0"></a>
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 8.0+">
   <img src="https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&amp;logoColor=white" alt="iOS 16+">
-  <img src="https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9" alt="簡体字中国語、英語、日本語">
+  <img src="https://img.shields.io/badge/UI-简中%20%7C%20繁中%20%7C%20English%20%7C%20日本語-5B8FF9" alt="簡体字中国語、繁体字中国語、英語、日本語">
 </p>
 
 <p align="center">
@@ -59,7 +59,7 @@ KiraChat は WebView のラッパーではありません。Android はネイテ
 - **複数のモデル経路:** GPT 互換 API、OpenAI Responses、Claude Messages、Gemini、Azure OpenAI、Ollama、GPT および GitHub Copilot のアカウントモード。
 - **ローカル・マルチモーダル:** Android の Qwen3.5 ローカル推論、画像認識、アルバム、カメラ、位置情報、Web 検索。
 - **ネイティブグループチャット:** SillyTavern サーバーなしでグループを作成し、メンション、ランダム／並列返信、キャラクターの自発メッセージに対応。
-- **モバイル体験:** WeChat 風メッセージと複合アイコン、MIUIX 風デザイン、ダークモード、3 言語 UI、システム通知。
+- **モバイル体験:** WeChat 風メッセージと複合アイコン、MIUIX 風デザイン、ダークモード、4 言語 UI、システム通知。
 - **データ管理:** ローカル保存、バックアップ／復元、セルフホスト型暗号化同期。通常のバックアップには API キーと OAuth トークンを含みません。
 
 ## プラットフォーム対応
@@ -98,7 +98,7 @@ KiraChat は WebView のラッパーではありません。Android はネイテ
 - MIUIX 風の大見出し、角丸グループカード、控えめな階層、ダークモード、即時の押下フィードバック、中断可能なスプリング、モーション低減への対応。
 - WeChat 風の個人／グループ吹き出し、1～9 人の複合グループアイコン、メッセージ検索、通知ミュート、ピン留め、チャット別背景、通知、長押し操作。
 - 返信生成中もテキスト、画像、位置情報を続けて送信できます。個人チャットはターンを待ち行列に入れ、グループは最新の文脈を再評価します。
-- 簡体字中国語、英語、日本語の UI。
+- 簡体字中国語、繁体字中国語、英語、日本語の UI。
 
 ### キャラクター、カード、世界設定
 

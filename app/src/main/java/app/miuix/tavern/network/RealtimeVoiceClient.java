@@ -17,6 +17,7 @@ import app.miuix.tavern.model.AppConfig;
 import app.miuix.tavern.model.CharacterCard;
 import app.miuix.tavern.model.ChatMessage;
 import app.miuix.tavern.model.RealtimeProvider;
+import app.miuix.tavern.util.LocaleUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,6 +25,7 @@ import org.json.JSONObject;
 
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -567,16 +569,25 @@ public final class RealtimeVoiceClient {
 
     private String buildInstructions() {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("你正在与用户进行一对一实时语音通话。")
-                .append("默认使用自然的简体中文交流，除非用户明确要求切换语言。")
-                .append("始终扮演角色“").append(character.name).append("”，")
-                .append("自然、简洁地口语回应，不要朗读舞台说明或 Markdown。")
-                .append("用户的称呼是“").append(config.persona).append("”。");
+        boolean traditional = LocaleUtils.isTraditionalChinese(Locale.getDefault());
+        if (traditional) {
+            prompt.append("你正在與使用者進行一對一即時語音通話。")
+                    .append("預設使用自然的繁體中文交流，除非使用者明確要求切換語言。")
+                    .append("始終扮演角色「").append(character.name).append("」，")
+                    .append("以自然、簡潔的口語回應，不要朗讀舞臺說明或 Markdown。")
+                    .append("使用者的稱呼是「").append(config.persona).append("」。");
+        } else {
+            prompt.append("你正在与用户进行一对一实时语音通话。")
+                    .append("默认使用自然的简体中文交流，除非用户明确要求切换语言。")
+                    .append("始终扮演角色“").append(character.name).append("”，")
+                    .append("自然、简洁地口语回应，不要朗读舞台说明或 Markdown。")
+                    .append("用户的称呼是“").append(config.persona).append("”。");
+        }
         appendPrompt(prompt, "角色描述", character.description);
-        appendPrompt(prompt, "性格", character.personality);
-        appendPrompt(prompt, "场景", character.scenario);
+        appendPrompt(prompt, traditional ? "個性" : "性格", character.personality);
+        appendPrompt(prompt, traditional ? "場景" : "场景", character.scenario);
         if (recentMessages != null && !recentMessages.isEmpty()) {
-            prompt.append("\n\n最近文字聊天：");
+            prompt.append(traditional ? "\n\n最近的文字聊天：" : "\n\n最近文字聊天：");
             int start = Math.max(0, recentMessages.size() - 8);
             for (int i = start; i < recentMessages.size(); i++) {
                 ChatMessage message = recentMessages.get(i);

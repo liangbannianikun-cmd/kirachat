@@ -96,7 +96,17 @@ enum APIService {
         formatter.locale = Locale.current
         formatter.dateStyle = .full
         formatter.timeStyle = .long
-        var sections = [
+        let traditional = usesTraditionalChinese(Locale.current)
+        var sections = traditional ? [
+            "目前日期、時間和時區：\(formatter.string(from: Date()))",
+            "你是\(character.name)。",
+            character.description,
+            character.personality.isEmpty ? "" : "個性：\(character.personality)",
+            character.scenario.isEmpty ? "" : "場景：\(character.scenario)",
+            character.exampleDialogue.isEmpty ? "" : "對話範例：\n\(character.exampleDialogue)",
+            "使用者名稱：\(settings.persona)",
+            "除非使用者明確要求其他語言，否則請以繁體中文回覆。"
+        ] : [
             "当前日期、时间和时区：\(formatter.string(from: Date()))",
             "你是\(character.name)。",
             character.description,
@@ -110,15 +120,28 @@ enum APIService {
             history: history,
             persona: settings.persona)
         if !lore.isEmpty {
-            sections.append("相关世界书：\n\(lore)")
+            sections.append(traditional ? "相關世界書：\n\(lore)" : "相关世界书：\n\(lore)")
         }
         if groupDecision {
-            sections.append("这是群聊。只在话题与你相关、你被点名或你确实能推进对话时回复；否则只输出 [SKIP]。不要替其他成员说话。")
+            sections.append(traditional
+                ? "這是群聊。只在話題與你相關、你被點名或你確實能推進對話時回覆；否則只輸出 [SKIP]。不要替其他成員說話。"
+                : "这是群聊。只在话题与你相关、你被点名或你确实能推进对话时回复；否则只输出 [SKIP]。不要替其他成员说话。")
         }
         if spontaneous {
-            sections.append("现在是单聊暂时空闲的时刻。请根据角色性格、当前情境、最近对话和当前时间，自然地主动发起一条简短的新消息；不要假装用户刚刚说过不存在的话。如果此刻不适合主动说话，只输出精确文本 [SKIP]，不要解释原因。")
+            sections.append(traditional
+                ? "現在是單聊暫時空閒的時刻。請根據角色個性、目前情境、最近對話和目前時間，自然地主動發起一則簡短的新訊息；不要假裝使用者剛才說過不存在的話。如果此刻不適合主動說話，只輸出精確文字 [SKIP]，不要解釋原因。"
+                : "现在是单聊暂时空闲的时刻。请根据角色性格、当前情境、最近对话和当前时间，自然地主动发起一条简短的新消息；不要假装用户刚刚说过不存在的话。如果此刻不适合主动说话，只输出精确文本 [SKIP]，不要解释原因。")
         }
         return sections.filter { !$0.isEmpty }.joined(separator: "\n\n")
+    }
+
+    private static func usesTraditionalChinese(_ locale: Locale) -> Bool {
+        guard locale.languageCode == "zh" else { return false }
+        if locale.scriptCode?.caseInsensitiveCompare("Hant") == .orderedSame {
+            return true
+        }
+        guard let region = locale.regionCode?.uppercased() else { return false }
+        return ["TW", "HK", "MO"].contains(region)
     }
 
     private static func matchingWorldBook(
