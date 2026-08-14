@@ -1,0 +1,50 @@
+name: Feature request / 功能建议
+description: Propose one focused improvement and explain the user problem it solves.
+title: "[Feature] "
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting / 提交前确认
+      options:
+        - label: I searched existing issues and did not find the same request. / 我已搜索已有 Issue。
+          required: true
+        - label: This request does not contain credentials or private chat data. / 此建议不包含凭据或私人聊天数据。
+          required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform / 平台
+      options:
+        - Android
+        - iOS
+        - Android and iOS
+        - Kira Switch
+        - Server or gateway
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem / 用户问题
+      description: Describe the problem before describing the feature.
+      placeholder: "When I ..., I cannot ..., which means ..."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed behavior / 建议行为
+      description: Explain the smallest useful outcome, including where it appears in the interface.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered / 考虑过的替代方案
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility notes / 兼容性说明
+      description: Mention affected providers, card formats, data migration, Android/iOS versions, or accessibility when relevant.

@@ -1,17 +1,29 @@
-[简体中文](README.md) · **English** · [日本語](README_JA.md)
+<p align="center"><a href="README.md">简体中文</a> · <strong>English</strong> · <a href="README_JA.md">日本語</a></p>
 
-# KiraChat — Native AI Character Chat for Android and iOS
+<p align="center">
+  <img src="app/src/main/res/mipmap-nodpi/app_icon.png" width="112" alt="KiraChat app icon">
+</p>
 
-[![KiraChat](https://img.shields.io/badge/KiraChat-v0.9.0-22C55E)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0)
-![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
-![iOS](https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&logoColor=white)
-![Languages](https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9)
+<h1 align="center">KiraChat</h1>
 
-**Bring SillyTavern character cards, multiple model APIs, local models, and multi-character group chats into a mobile-native client.**
+<p align="center"><strong>Bring SillyTavern character cards, multiple model APIs, local models, and group chat to a native Android / iOS client.</strong></p>
+
+<p align="center">
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/KiraChat-v0.9.0-22C55E" alt="KiraChat v0.9.0"></a>
+  <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 8.0+">
+  <img src="https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&amp;logoColor=white" alt="iOS 16+">
+  <img src="https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9" alt="Simplified Chinese, English, and Japanese">
+</p>
+
+<p align="center">
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/download/v0.9.0/KiraChat-0.9.0-android-debug.apk"><strong>Download Android APK</strong></a>
+  ·
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/download/v0.9.0/KiraChat-0.9.0-ios-unsigned.ipa"><strong>Download iOS IPA</strong></a>
+  ·
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0">Release and checksums</a>
+</p>
 
 KiraChat is not a WebView wrapper. The Android app uses native Views and the iOS app uses SwiftUI. Conversations, character profiles, lorebooks, groups, voice, and connection settings are redesigned for touch around a familiar WeChat-style structure.
-
-This repository also provides **[Kira Switch](#kira-switch--character-card-injector-for-ai-coding-tools)**, a Windows desktop tool that safely applies one SillyTavern character card to Codex, Claude Code, Hermes, OpenClaw, and OpenCode.
 
 ## What it solves
 
@@ -63,9 +75,14 @@ KiraChat packages and checksums are published in the **[KiraChat v0.9.0 Release]
 | System dictation + current model + TTS voice chat | ✅ | ✅ |
 | Encrypted server sync | ✅ | ✅ |
 
-## Kira Switch — Character-card injector for AI coding tools
+## Related desktop tool: Kira Switch
 
 **Kira Switch is the Windows desktop character console in the KiraChat family.** Import one SillyTavern card and use the same character with Codex, Claude Code, Hermes, OpenClaw, and OpenCode without manually finding and editing five different prompt files.
+
+**[Download Kira Switch 1.0.0 for Windows](https://github.com/liangbannianikun-cmd/kirachat/releases/download/kira-switch-v1.0.0/Kira-Switch-1.0.0-Windows-Portable.exe)** · [Open its separate Release](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
+
+<details>
+<summary><strong>Show Kira Switch installation, supported clients, and safety details</strong></summary>
 
 [![Kira Switch](https://img.shields.io/badge/Kira%20Switch-v1.0.0-7C3AED)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows&logoColor=white)
@@ -100,6 +117,8 @@ No Node.js installation or API key is required. The current build is not commerc
 
 Kira Switch and KiraChat share the same SillyTavern Character Card compatibility direction, but Kira Switch is an independent desktop tool. **It does not synchronize KiraChat conversations, accounts, or keys.** Source and full development documentation are on the [`kira-switch` branch](https://github.com/liangbannianikun-cmd/kirachat/tree/kira-switch/kira-switch); binaries are in the [Kira Switch v1.0.0 Release](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0).
 
+</details>
+
 ## Documentation
 
 - [Detailed setup](#detailed-setup)
@@ -111,6 +130,8 @@ Kira Switch and KiraChat share the same SillyTavern Character Card compatibility
 - [Build](#build)
 - [Data and privacy](#data-and-privacy)
 - [Design notes](DESIGN.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](.github/SECURITY.md)
 
 <details>
 <summary><strong>Complete feature list</strong></summary>

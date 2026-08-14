@@ -1,17 +1,29 @@
-**简体中文** · [English](README_EN.md) · [日本語](README_JA.md)
+<p align="center"><strong>简体中文</strong> · <a href="README_EN.md">English</a> · <a href="README_JA.md">日本語</a></p>
 
-# 澄语 KiraChat — 原生 Android / iOS AI 角色聊天客户端
+<p align="center">
+  <img src="app/src/main/res/mipmap-nodpi/app_icon.png" width="112" alt="澄语 KiraChat 应用图标">
+</p>
 
-[![KiraChat](https://img.shields.io/badge/KiraChat-v0.9.0-22C55E)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0)
-![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
-![iOS](https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&logoColor=white)
-![Languages](https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9)
+<h1 align="center">澄语 KiraChat</h1>
 
-**把 SillyTavern 角色卡、多模型 API、本地模型和群聊带到真正适合手机使用的原生客户端。**
+<p align="center"><strong>把 SillyTavern 角色卡、多模型 API、本地模型和群聊带到原生 Android / iOS 客户端。</strong></p>
+
+<p align="center">
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/KiraChat-v0.9.0-22C55E" alt="KiraChat v0.9.0"></a>
+  <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 8.0+">
+  <img src="https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&amp;logoColor=white" alt="iOS 16+">
+  <img src="https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9" alt="简体中文、English、日本語">
+</p>
+
+<p align="center">
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/download/v0.9.0/KiraChat-0.9.0-android-debug.apk"><strong>下载 Android APK</strong></a>
+  ·
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/download/v0.9.0/KiraChat-0.9.0-ios-unsigned.ipa"><strong>下载 iOS IPA</strong></a>
+  ·
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0">版本与校验文件</a>
+</p>
 
 KiraChat（澄语）不是 WebView 套壳：Android 使用原生 View，iOS 使用 SwiftUI，针对触屏重新设计了微信式消息、角色资料、世界书、群聊、语音与连接流程。
-
-本仓库还提供 **[Kira Switch](#kira-switch--ai-编程工具角色卡注入器)**：把同一张 SillyTavern 角色卡安全切换到 Codex、Claude Code、Hermes、OpenClaw 和 OpenCode 的 Windows 桌面工具。
 
 ## 它解决什么问题
 
@@ -63,9 +75,14 @@ KiraChat 安装包与校验文件统一发布在 **[KiraChat v0.9.0 Release](htt
 | 系统听写 + 当前模型 + TTS 语音对话 | ✅ | ✅ |
 | 加密服务器同步 | ✅ | ✅ |
 
-## Kira Switch — AI 编程工具角色卡注入器
+## 关联桌面工具：Kira Switch
 
 **Kira Switch 是 KiraChat 系列的 Windows 桌面角色控制台。** 导入一张 SillyTavern 角色卡，即可让 Codex、Claude Code、Hermes、OpenClaw 和 OpenCode 使用同一个角色，不必手工查找和编辑五套不同的提示词文件。
+
+**[下载 Kira Switch 1.0.0 Windows 便携版](https://github.com/liangbannianikun-cmd/kirachat/releases/download/kira-switch-v1.0.0/Kira-Switch-1.0.0-Windows-Portable.exe)** · [查看独立 Release](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
+
+<details>
+<summary><strong>展开查看 Kira Switch 安装、兼容客户端和安全机制</strong></summary>
 
 [![Kira Switch](https://img.shields.io/badge/Kira%20Switch-v1.0.0-7C3AED)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows&logoColor=white)
@@ -100,9 +117,11 @@ KiraChat 安装包与校验文件统一发布在 **[KiraChat v0.9.0 Release](htt
 
 Kira Switch 与 KiraChat 共用 SillyTavern Character Card 兼容方向，但它是独立桌面工具，**不会自动同步 KiraChat 的聊天记录、账号或密钥**。源码与完整开发文档位于 [`kira-switch` 分支](https://github.com/liangbannianikun-cmd/kirachat/tree/kira-switch/kira-switch)，安装包位于 [Kira Switch v1.0.0 Release](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)。
 
+</details>
+
 ## 文档导航
 
-- [Kira Switch 桌面角色卡注入器](#kira-switch--ai-编程工具角色卡注入器)
+- [Kira Switch 桌面角色卡注入器](#关联桌面工具kira-switch)
 - [详细配置与开始聊天](#详细配置与开始聊天)
 - [服务器同步](#服务器同步)
 - [账户说明](#账户说明)
@@ -112,6 +131,8 @@ Kira Switch 与 KiraChat 共用 SillyTavern Character Card 兼容方向，但它
 - [构建](#构建)
 - [数据与隐私](#数据与隐私)
 - [设计说明](DESIGN.md)
+- [参与贡献](CONTRIBUTING.md)
+- [安全策略](.github/SECURITY.md)
 
 <details>
 <summary><strong>查看完整功能清单</strong></summary>

@@ -1,17 +1,29 @@
-[简体中文](README.md) · [English](README_EN.md) · **日本語**
+<p align="center"><a href="README.md">简体中文</a> · <a href="README_EN.md">English</a> · <strong>日本語</strong></p>
 
-# 澄語 KiraChat — Android / iOS 向けネイティブ AI キャラクターチャット
+<p align="center">
+  <img src="app/src/main/res/mipmap-nodpi/app_icon.png" width="112" alt="澄語 KiraChat アプリアイコン">
+</p>
 
-[![KiraChat](https://img.shields.io/badge/KiraChat-v0.9.0-22C55E)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0)
-![Android](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)
-![iOS](https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&logoColor=white)
-![Languages](https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9)
+<h1 align="center">澄語 KiraChat</h1>
 
-**SillyTavern のキャラクターカード、複数のモデル API、ローカルモデル、複数キャラクターのグループチャットを、モバイル向けネイティブアプリにまとめます。**
+<p align="center"><strong>SillyTavern のキャラクターカード、複数のモデル API、ローカルモデル、グループチャットを Android / iOS ネイティブアプリにまとめます。</strong></p>
+
+<p align="center">
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0"><img src="https://img.shields.io/badge/KiraChat-v0.9.0-22C55E" alt="KiraChat v0.9.0"></a>
+  <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 8.0+">
+  <img src="https://img.shields.io/badge/iOS-16%2B-000000?logo=apple&amp;logoColor=white" alt="iOS 16+">
+  <img src="https://img.shields.io/badge/UI-中文%20%7C%20English%20%7C%20日本語-5B8FF9" alt="簡体字中国語、英語、日本語">
+</p>
+
+<p align="center">
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/download/v0.9.0/KiraChat-0.9.0-android-debug.apk"><strong>Android APK をダウンロード</strong></a>
+  ·
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/download/v0.9.0/KiraChat-0.9.0-ios-unsigned.ipa"><strong>iOS IPA をダウンロード</strong></a>
+  ·
+  <a href="https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0">リリースとチェックサム</a>
+</p>
 
 KiraChat は WebView のラッパーではありません。Android はネイティブ View、iOS は SwiftUI で実装されています。会話、キャラクター詳細、世界設定、グループ、音声、接続設定を、WeChat に近い分かりやすい構成でタッチ操作向けに再設計しています。
-
-このリポジトリでは、SillyTavern のキャラクターカードを Codex、Claude Code、Hermes、OpenClaw、OpenCode に安全に適用する Windows ツール **[Kira Switch](#kira-switch--ai-コーディングツール向けキャラクターカード適用ツール)** も公開しています。
 
 ## 解決すること
 
@@ -63,9 +75,14 @@ KiraChat は WebView のラッパーではありません。Android はネイテ
 | システム音声入力 + 現在のモデル + TTS 音声チャット | ✅ | ✅ |
 | 暗号化サーバー同期 | ✅ | ✅ |
 
-## Kira Switch — AI コーディングツール向けキャラクターカード適用ツール
+## 関連デスクトップツール：Kira Switch
 
 **Kira Switch は KiraChat ファミリーの Windows デスクトップ用キャラクターコンソールです。** SillyTavern のキャラクターカードを 1 枚取り込み、5 種類のプロンプトファイルを手作業で探して編集することなく、Codex、Claude Code、Hermes、OpenClaw、OpenCode で同じキャラクターを利用できます。
+
+**[Kira Switch 1.0.0 Windows 版をダウンロード](https://github.com/liangbannianikun-cmd/kirachat/releases/download/kira-switch-v1.0.0/Kira-Switch-1.0.0-Windows-Portable.exe)** · [専用 Release を開く](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
+
+<details>
+<summary><strong>Kira Switch の導入、対応クライアント、安全機構を表示</strong></summary>
 
 [![Kira Switch](https://img.shields.io/badge/Kira%20Switch-v1.0.0-7C3AED)](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows&logoColor=white)
@@ -100,6 +117,8 @@ Node.js のインストールや API キーは不要です。現在のビルド�
 
 Kira Switch と KiraChat は SillyTavern Character Card の互換方針を共有しますが、Kira Switch は独立したデスクトップツールです。**KiraChat の会話、アカウント、キーは同期しません。** ソースと開発ドキュメントは [`kira-switch` ブランチ](https://github.com/liangbannianikun-cmd/kirachat/tree/kira-switch/kira-switch)、バイナリは [Kira Switch v1.0.0 Release](https://github.com/liangbannianikun-cmd/kirachat/releases/tag/kira-switch-v1.0.0) にあります。
 
+</details>
+
 ## ドキュメント
 
 - [セットアップ詳細](#セットアップ詳細)
@@ -111,6 +130,8 @@ Kira Switch と KiraChat は SillyTavern Character Card の互換方針を共有
 - [ビルド](#ビルド)
 - [データとプライバシー](#データとプライバシー)
 - [デザインノート](DESIGN.md)
+- [コントリビューション](CONTRIBUTING.md)
+- [セキュリティポリシー](.github/SECURITY.md)
 
 <details>
 <summary><strong>全機能一覧</strong></summary>

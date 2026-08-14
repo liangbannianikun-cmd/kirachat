@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Setup documentation / 配置文档
+    url: https://github.com/liangbannianikun-cmd/kirachat#详细配置与开始聊天
+    about: Check installation, API, local-model, voice, and sync instructions first.
+  - name: Releases / 安装包
+    url: https://github.com/liangbannianikun-cmd/kirachat/releases/tag/v0.9.0
+    about: Download KiraChat v0.9.0 packages and checksums.
+  - name: Private security report / 私密安全报告
+    url: https://github.com/liangbannianikun-cmd/kirachat/security/advisories/new
+    about: Report exploitable vulnerabilities without exposing details publicly.
